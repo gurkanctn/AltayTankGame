@@ -13,12 +13,7 @@
 
 
 
-Altay Tank Game can be found on: http://epicos.itch.io
+Altay Tank Game web page is on: http://epicos.itch.io
 
 
-
-Developed by G.Çetin, http://twitter.com/gurkanctn
-
-
-
-December 2018
+Important: This set of C++ source codes may require Visual Studio 2015+ to build and debug.
