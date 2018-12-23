@@ -1,3 +1,24 @@
+ALTAY Tank Game v0.7
+
+Thank you for downloading and trying Altay.
+
+The game is under development, so features are being added weekly. Be sure to check out for new updates.
+
+As a hobby coder, I'd like to hear your comments and suggestions towards the game. You can contact me either on the game's web page on http://epicos.itch.io or through Twitter @gurkanctn.
+
+Bug reports are welcome too!
+
+I hope you enjoy this small game!
+
+========================================
+GAME PLAY
+
+Use A,S,D,W keys to move your tank.
+You can aim and shoot with the mouse.
+Enemies can fire, so run away from enemy fire.
+Collect powerups to increase your fire power.
+
+========================================
 LICENCES
 1. OLC Pixel Game Engine, refer to www.onelonecoder.com
 2. Sprites are from opengameart.com, I've modified them a little bit (colors and shapes).
