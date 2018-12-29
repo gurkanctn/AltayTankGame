@@ -1387,7 +1387,7 @@ namespace olc
 #else
 #ifndef __MINGW32__
 					char sTitle[256];
-					sprintf_s(sTitle, 256, "OneLoneCoder.com - Pixel Game Engine - %s - FPS: %d", sAppName.c_str(), nFrameCount);
+					sprintf_s(sTitle, 256, "*** %s - FPS: %d", sAppName.c_str(), nFrameCount);
 #else
 					char sTitle[256];
 					sprintf(sTitle, "OneLoneCoder.com - Pixel Game Engine - %s - FPS: %d", sAppName.c_str(), nFrameCount);

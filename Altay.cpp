@@ -2,6 +2,7 @@
 #include "olcPixelGameEngine.h"
 #include "olcPGEX_Graphics2D.h"
 
+
 using namespace std;
 const double PI = 3.141592653589793238463;
 
@@ -43,7 +44,7 @@ class Altay : public olc::PixelGameEngine
 public:
 	Altay()
 	{
-		sAppName = "Tank Mission ALTAY, 0.7a";
+		sAppName = "Tank Mission ALTAY, 0.8a";
 	}
 
 private:
@@ -53,7 +54,9 @@ private:
 	int gameScore;	
 	int nGameState;		//splash screen,  game, endGame, todo: menu
 	int nLevel = 1;
-
+	int HiScore = -10;
+	string BestPlayerName[3];
+	bool bStateEntry = true;
 	olc::Sprite *buffBack;
 	olc::Sprite *sprBackground;				
 	olc::Sprite *sprSplashScreen;
@@ -135,6 +138,34 @@ private:
 	list<sActivePowerup> listActivePowerups;
 
 	void SplashScreen() {
+		bStateEntry = true;		//todo: think sth better, a global boolStateEntry is possibly not useful/readable
+
+		// Read HiScores from file
+		{
+			std::fstream fScores("hiscores.txt", std::ios_base::in);
+			struct HiScoreData {
+				int score;
+				char name[3];
+			};
+			HiScoreData hiscores[10];
+			int numscores = 0;
+			while (fScores >> hiscores[numscores].score >> hiscores[numscores].name) {
+				numscores++;
+			}
+			fScores.close();
+			int BestScore = -1;
+			for (int i = 0; i < numscores; i++)
+			{
+				if (hiscores[i].score > BestScore) {
+					BestScore = hiscores[i].score;
+					BestPlayerName[0] = hiscores[i].name[0];
+					BestPlayerName[1] = hiscores[i].name[1];
+					BestPlayerName[2] = hiscores[i].name[2];
+				}
+			}
+
+			HiScore = BestScore;
+		}
 		//Clear(olc::BLACK);
 		Player.px = ScreenWidth() / 2;
 		Player.py = ScreenHeight() / 2;
@@ -147,10 +178,16 @@ private:
 		maxSpeed = 2.0f;		//max speed in U and V for Player
 		std::srand(std::time(nullptr));
 		SetDrawTarget(buffBack);
-		DrawSprite(-300, -200, sprSplashScreen);
+		olc::GFX2D::Transform2D t;
+		t.Scale(1.8, 1.8);
+		t.Translate(-160.0f, 0.0f);
+		olc::GFX2D::DrawSprite(sprSplashScreen, t);
+//		DrawSprite(0, 0, sprSplashScreen);
 		//wait for space key to start game
-		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 2, "PRESS SPACE TO START...", olc::BLACK, 3);
-		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 2 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
+		DrawString(ScreenWidth() / 20, ScreenHeight() / 3, "ALTAY\n\nTANK GAME", olc::DARK_GREEN, 6);
+		DrawString(ScreenWidth() / 20 - 4, ScreenHeight() / 3 - 4, "ALTAY\n\nTANK GAME", olc::GREEN, 6);
+		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() * 3/ 4, "PRESS SPACE TO START...", olc::BLACK, 3);
+		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() *3/4 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
 		//Draw to Screen now
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
@@ -210,7 +247,7 @@ private:
 			//Generate one Enemy (approx every 2 seconds (1/100 chance)
 			int dicer = 0;
 
-			dicer = std::rand() % (2500 - int(Player.health)) / nLevel;	//change difficulty according to player Health and LEVEL!
+			dicer = std::rand() % (1500 - int(Player.health)) / ((nLevel+3)/3);	//change difficulty according to player Health and LEVEL!
 
 			if (dicer == 0 && nLevel > 3) {
 				sEnemy e;
@@ -219,7 +256,7 @@ private:
 				e.sprEnemy = new olc::Sprite("resources\\enemy.png");
 				e.vx = 10 * (std::rand() % 20 - 10);
 				e.vy = 10 * (std::rand() % 20 - 10);
-				e.health = 100;		//full health
+				e.health = 150;		//full health
 				float dxE = (float)e.px - Player.px;	// enemy should face Player
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
@@ -238,7 +275,7 @@ private:
 				e.sprEnemy = new olc::Sprite("resources\\enemy2.png");
 				e.vx = 10 * (std::rand() % 20 - 10);
 				e.vy = 10 * (std::rand() % 20 - 10);
-				e.health = 255;		//full health
+				e.health = 40;		//full health
 				float dxE = (float)e.px - Player.px;
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
@@ -477,13 +514,17 @@ private:
 		}
 		//draw ActivePowerUps
 		{
-			SetPixelMode(olc::Pixel::MASK);
+			float RemainingPowerUp = 0;
 			for (auto &apu : listActivePowerups)
 			{
-				FillRect(20, 55, listActivePowerups.size() * 20, 20, olc::BLUE);
-				DrawString(20, 60, "PU", olc::WHITE);
+				RemainingPowerUp = max(apu.timeout - apu.timer, RemainingPowerUp);
 			}
-			SetPixelMode(olc::Pixel::NORMAL);
+			if (RemainingPowerUp > 0) {
+				SetPixelMode(olc::Pixel::MASK);
+				FillRect(20, 55, RemainingPowerUp * 10, 20, olc::BLUE);
+				DrawString(20, 60, "PU", olc::WHITE);
+				SetPixelMode(olc::Pixel::NORMAL);
+			}
 		}
 		//draw bullets
 		{
@@ -508,8 +549,24 @@ private:
 		}
 		//Draw Game Score and Player Health
 		{
-			DrawString(21, 11, to_string(gameScore), olc::BLACK, 2);
-			DrawString(20, 10, to_string(gameScore), olc::WHITE, 2);
+			int BestScore;
+			if (gameScore < HiScore){
+				BestScore = HiScore;
+			}
+			else {
+				BestScore = gameScore;
+			}
+			DrawString(21, 11, "P1", olc::BLACK, 2);
+			DrawString(20, 10, "P1", olc::WHITE, 2);
+			DrawString(121, 11, to_string(gameScore), olc::BLACK, 2);
+			DrawString(120, 10, to_string(gameScore), olc::WHITE, 2);
+			//cout << BestPlayerName << " ";
+			DrawString(21, 31, BestPlayerName[0] + BestPlayerName[1] + BestPlayerName[2], olc::BLACK, 2);		//BUG: TODO: PROBLEM HERE (DRAWS EXTRA CHARACTERS!)
+			DrawString(20, 30, BestPlayerName[0] + BestPlayerName[1] + BestPlayerName[2], olc::RED, 2);
+			DrawString(121, 31, to_string(BestScore), olc::BLACK, 2);
+			DrawString(120, 30, to_string(BestScore), olc::RED, 2);
+			
+
 			DrawString(ScreenWidth() - 160, 11, "LEVEL:", olc::DARK_BLUE, 2);
 			DrawString(ScreenWidth() - 159, 10, "LEVEL:", olc::BLUE, 2);
 			DrawString(ScreenWidth() - 60, 11, to_string(nLevel), olc::DARK_CYAN, 2);
@@ -524,21 +581,42 @@ private:
 			DrawSprite(0, 0, buffBack);
 		}
 	}
-	void GameOver() {
-
+	void GameOver(float fElapsedTime) {
+		if (bStateEntry) {
+			//
+			cout << "entered GameOver!";
+			bStateEntry = false;
+		}
 		SetDrawTarget(buffBack);
-		DrawSprite(-300, -200, sprSplashScreen);
-		DrawString(ScreenWidth() / 2 - 150, ScreenHeight() / 2 - 100, "GAME OVER!", olc::BLACK, 4);
-		DrawString(ScreenWidth() / 2 - 150 - 4, ScreenHeight() / 2 - 104, "GAME OVER!", olc::RED, 4);
+		FillRect(0, 0, ScreenWidth(), ScreenHeight(), olc::DARK_RED);
+		olc::GFX2D::Transform2D t;
+		t.Scale(1.8, 1.8);
+		t.Translate(-160.0f, 0.0f);
+		olc::GFX2D::DrawSprite(sprSplashScreen, t);
+		//DrawSprite(0, 0, sprSplashScreen);
+		DrawString(ScreenWidth() / 2 - 200, ScreenHeight() / 2 - 200, "GAME OVER!", olc::BLACK, 5);
+		DrawString(ScreenWidth() / 2 - 200 - 4, ScreenHeight() / 2 - 204, "GAME OVER!", olc::RED, 5);
 		char scoreText[20];
 		sprintf_s(scoreText, "SCORE: %d", gameScore);
 		DrawString(ScreenWidth() / 2 - 150, ScreenHeight() / 2 , scoreText, olc::BLACK, 3);
 		DrawString(ScreenWidth() / 2 - 150 - 4, ScreenHeight() / 2 - 4, scoreText, olc::WHITE, 3);
 
+		if (gameScore > HiScore) {
+			//todo: write to file (in sorted order?)
+			std::fstream fScores("hiscores.txt", std::ios_base::out);
+			fScores << gameScore << " " << "aaa" ;
+			fScores.close();
+
+			float animate = 15*(sin(3*fGlobalTime)+cos(2*fGlobalTime));
+			fGlobalTime += fElapsedTime;
+			DrawString(ScreenWidth() / 2 - 150, ScreenHeight() / 2 + 75 + animate, "NEW HI SCORE!!!", olc::BLACK, 3);
+			DrawString(ScreenWidth() / 2 - 150 - 4, ScreenHeight() / 2 + 71 + animate, "NEW HI SCORE!!!", olc::CYAN, 3);
+
+		}
 		//wait for space key to start game
 		
-		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 2 + 100, "PRESS SPACE TO START AGAIN.", olc::BLACK, 2);
-		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 2 + 96, "PRESS SPACE TO START AGAIN.", olc::WHITE, 2);
+		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 2 + 150, "PRESS SPACE TO START AGAIN.", olc::BLACK, 2);
+		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 2 + 146, "PRESS SPACE TO START AGAIN.", olc::WHITE, 2);
 		//Draw to Screen now
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
@@ -551,10 +629,10 @@ public:
 	bool OnUserCreate() override
 	{
 		// Called once at the start, so create things here
-
+		
 		sprPlayer = new olc::Sprite("resources\\tank.png");
 		sprBackground = new olc::Sprite("resources\\planet.png");
-		sprSplashScreen = new olc::Sprite("resources\\planet.png");
+		sprSplashScreen = new olc::Sprite("resources\\altay-01.jpg");
 		buffBack = new olc::Sprite(ScreenWidth(), ScreenHeight());
 
 		nGameState = 0;
@@ -569,12 +647,13 @@ public:
 			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 1;
 		}
 		else if (nGameState == 999) {				//GAME OVER
-			GameOver();
+			GameOver(fElapsedTime);
 			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 0;
 		}
 		else if (nGameState == 1) {				// GAME IS ON
 			PlayGame(fElapsedTime);
 			if (Player.health < 0) nGameState = 999;
+			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 999; //FOR TEST
 		}
 		return true;
 	}

@@ -1,14 +1,14 @@
-ALTAY Tank Game v0.7
-
-Thank you for downloading and trying Altay.
-
-The game is under development, so features are being added weekly. Be sure to check out for new updates.
+ALTAY Tank Game v0.8
 
 As a hobby coder, I'd like to hear your comments and suggestions towards the game. You can contact me either on the game's web page on http://epicos.itch.io or through Twitter @gurkanctn.
 
-Bug reports are welcome too!
+Thank you for downloading and trying Altay.
+
+The game is under development, so features are being added weekly.
 
 I hope you enjoy this small game!
+
+Feel free to share this game with your friends, neighbours, colleagues, and other relatives :)
 
 ========================================
 GAME PLAY
@@ -19,6 +19,11 @@ Enemies can fire, so run away from enemy fire.
 Collect powerups to increase your fire power.
 
 ========================================
+
+Credits and Thanks:
+Javidx9 @ OneLoneCoder.com : For the Pixel Game Engine
+
+
 LICENCES
 1. OLC Pixel Game Engine, refer to www.onelonecoder.com
 2. Sprites are from opengameart.com, I've modified them a little bit (colors and shapes).
@@ -29,5 +34,10 @@ Altay Tank Game can be found on: http://epicos.itch.io
 
 Developed by G.Çetin, http://twitter.com/gurkanctn
 
-December 2018
+
+IMPORTANT:
+
+The resources (image files and sprites used in the game) are under the folder "[GAMEDIRECTORY]\resources\"
+
+Please copy the resources folder inside your source code folder.
 
