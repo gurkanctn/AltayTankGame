@@ -1,21 +1,21 @@
 #include "pch.h"
+#define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 #include "olcPGEX_Graphics2D.h"
-
-
+#include "olcPGEX_Sound.h"
 using namespace std;
 const double PI = 3.141592653589793238463;
 
 /* 
 BUGS:
--- Game continues after Game Over.
--- sometimes several enemies spawn simultaneously (there must be a limit to size_of_enemy_list)
+-- powerup sometimes dies prematurely
+
 
 TODO:
--- add sounds
 -- info popup for powerups
 -- add a super bomb powerup
 
+++ added sounds and background music	DONE! 09.01.2019
 ++ powerup effectivity timers			DONE! 23.12.2018
 ++ Init Game memory (kill and reinit)	DONE! 23.12.2018
 ++ Game reinits after Game Over screen.	DONE! 23.12.2018
@@ -44,7 +44,7 @@ class Altay : public olc::PixelGameEngine
 public:
 	Altay()
 	{
-		sAppName = "Tank Mission ALTAY, 0.8a";
+		sAppName = "Tank Mission ALTAY, 0.9";
 	}
 
 private:
@@ -53,6 +53,7 @@ private:
 	float fWorldY = 0.0f;
 	int gameScore;	
 	int nGameState;		//splash screen,  game, endGame, todo: menu
+	int prevGameState;
 	int nLevel = 1;
 	int HiScore = -10;
 	string BestPlayerName[3];
@@ -61,6 +62,13 @@ private:
 	olc::Sprite *sprBackground;				
 	olc::Sprite *sprSplashScreen;
 	olc::Sprite *sprPowerUp_01;
+	int sndSplashScreen;
+	int sndGameOver;
+	int sndGameOverOnce;
+	int sndGameBackground;
+	int sndFireCannon;
+	int sndExplode;
+	int sndPowerUp1;
 
 	struct sPlayer {
 		float px = 0.0f;
@@ -139,6 +147,7 @@ private:
 
 	void SplashScreen() {
 		bStateEntry = true;		//todo: think sth better, a global boolStateEntry is possibly not useful/readable
+		
 
 		// Read HiScores from file
 		{
@@ -176,7 +185,7 @@ private:
 		fFireRateAcc = 0.0f;
 		FireSpeed = 0.0f;		//Fire speed for Player
 		maxSpeed = 2.0f;		//max speed in U and V for Player
-		std::srand(std::time(nullptr));
+		//std::srand(std::time(nullptr));
 		SetDrawTarget(buffBack);
 		olc::GFX2D::Transform2D t;
 		t.Scale(1.8, 1.8);
@@ -212,12 +221,12 @@ private:
 		if (GetKey(olc::Key::D).bHeld) Player.vx += Player.speed * fElapsedTime;
 		if (GetKey(olc::Key::W).bHeld) Player.vy -= Player.speed * fElapsedTime;
 		if (GetKey(olc::Key::S).bHeld) Player.vy += Player.speed * fElapsedTime;
-		if (GetKey(olc::Key::E).bHeld) {
+		/*if (GetKey(olc::Key::E).bHeld) {
 			Player.vx = 0.0;
 			Player.vy = 0.0;
 			Player.px = ScreenWidth() / 2;
 			Player.py = ScreenHeight() / 2;
-		}
+		}*/
 		Player.vx = 0.99 * Player.vx;
 		Player.vy = 0.99 * Player.vy;
 
@@ -241,8 +250,6 @@ private:
 		//gameScore += fElapsedTime * 100;
 		if (gameScore > nLevel * 10000) nLevel++;
 
-		//if (GetKey(olc::Key::SPACE).bPressed) Player.health = -1 * Player.health;		// for TEST
-
 		if (listEnemies.size() < nLevel) {
 			//Generate one Enemy (approx every 2 seconds (1/100 chance)
 			int dicer = 0;
@@ -261,10 +268,10 @@ private:
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
 				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
-				e.firePower = 2 * nLevel;
+				e.firePower = 1.2 * nLevel;
 				e.fireRate = 1.2;
 				e.fireRateAcc = 0.0f;
-				e.fireSpeed = 10;
+				e.fireSpeed = 6;
 				e.speedMax = 20;
 				listEnemies.push_back(e);
 			}
@@ -296,7 +303,7 @@ private:
 				pu.fBulletHitPoint = 0;
 				pu.fBulletSpeedFactor = 0.95f;
 				pu.fPlayerFireRate = 0.125f;
-				pu.fPlayerHealth = 0.0f;
+				pu.fPlayerHealth = 20.0f;
 				pu.fScore = 150;
 				pu.fPlayerMaxSpeed = 2.5;
 				pu.timeout = 10.0f;
@@ -324,6 +331,7 @@ private:
 
 				//Generate one Bullet for Player
 				sBullet b;
+				olc::SOUND::PlaySample(sndFireCannon);
 				float d = 1.0f / (sqrtf(dx * dx + dy * dy));
 				b.px = Player.px + 40 * cos(fHeading - 1.5708f);
 				b.py = Player.py + 40 * sin(fHeading - 1.5708f);
@@ -351,6 +359,7 @@ private:
 					o.vx = o.vx * b.speedFactor;
 					o.vy = o.vy * b.speedFactor;
 					b.hasExploded = true;
+					olc::SOUND::PlaySample(sndExplode);
 					sExplosion x;
 					x.px = o.px;
 					x.py = o.py;
@@ -451,6 +460,7 @@ private:
 				apu.timer = 0.0f;
 				apu.timeout = 10.0f;
 				listActivePowerups.push_back(apu);
+				olc::SOUND::PlaySample(sndPowerUp1);
 			}
 		}
 		listPowerups.remove_if([&](const sPowerup &pu) {return (pu.px < 0) || (pu.py < 0) || (pu.px > ScreenWidth()) || (pu.py > ScreenHeight()) || pu.timer >= pu.timeout; });
@@ -584,7 +594,7 @@ private:
 	void GameOver(float fElapsedTime) {
 		if (bStateEntry) {
 			//
-			cout << "entered GameOver!";
+			// cout << "entered GameOver!";
 			bStateEntry = false;
 		}
 		SetDrawTarget(buffBack);
@@ -629,13 +639,22 @@ public:
 	bool OnUserCreate() override
 	{
 		// Called once at the start, so create things here
-		
+		olc::SOUND::InitialiseAudio();
+		sndSplashScreen = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");
+		sndGameBackground = olc::SOUND::LoadAudioSample("resources\\music\\GameBackground.wav");
+		sndGameOver = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");	//to be replaced with GameOver again?
+		sndGameOverOnce = olc::SOUND::LoadAudioSample("resources\\soundFX\\GameOverOnce.wav"); 
+		sndFireCannon = olc::SOUND::LoadAudioSample("resources\\soundFX\\FireCannon.wav");
+		sndExplode = olc::SOUND::LoadAudioSample("resources\\soundFX\\Explode.wav");
+		sndPowerUp1 = olc::SOUND::LoadAudioSample("resources\\soundFX\\PowerUp1.wav");		//test
+
 		sprPlayer = new olc::Sprite("resources\\tank.png");
 		sprBackground = new olc::Sprite("resources\\planet.png");
 		sprSplashScreen = new olc::Sprite("resources\\altay-01.jpg");
 		buffBack = new olc::Sprite(ScreenWidth(), ScreenHeight());
 
 		nGameState = 0;
+		prevGameState = -1;
 		return true;
 	}
 
@@ -643,18 +662,38 @@ public:
 	{
 
 		if (nGameState == 0) {
+			if (prevGameState != nGameState) olc::SOUND::PlaySample(sndSplashScreen, true); // Plays the sample in looping mode
 			SplashScreen();
+			prevGameState = nGameState;
 			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 1;
 		}
 		else if (nGameState == 999) {				//GAME OVER
+			if (prevGameState != nGameState) {
+				olc::SOUND::StopAll();
+				olc::SOUND::PlaySample(sndGameOverOnce);   // Plays the gameover effect
+				olc::SOUND::PlaySample(sndGameOver, true); // Plays the sample in looping mode
+			}
 			GameOver(fElapsedTime);
+			prevGameState = nGameState;
 			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 0;
 		}
 		else if (nGameState == 1) {				// GAME IS ON
+			if (prevGameState != nGameState) {
+				olc::SOUND::StopSample(sndSplashScreen);
+				olc::SOUND::StopSample(sndGameOver);
+				olc::SOUND::PlaySample(sndGameBackground, true);
+			}
 			PlayGame(fElapsedTime);
+			prevGameState = nGameState;
 			if (Player.health < 0) nGameState = 999;
-			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 999; //FOR TEST
+			// if (GetKey(olc::Key::SPACE).bPressed) nGameState = 999; //FOR TEST
 		}
+		return true;
+	}
+
+	bool OnUserDestroy()
+	{
+		olc::SOUND::DestroyAudio();
 		return true;
 	}
 };

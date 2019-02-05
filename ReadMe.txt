@@ -1,4 +1,4 @@
-ALTAY Tank Game v0.8
+ALTAY Tank Game v0.9
 
 As a hobby coder, I'd like to hear your comments and suggestions towards the game. You can contact me either on the game's web page on http://epicos.itch.io or through Twitter @gurkanctn.
 
@@ -28,16 +28,11 @@ LICENCES
 1. OLC Pixel Game Engine, refer to www.onelonecoder.com
 2. Sprites are from opengameart.com, I've modified them a little bit (colors and shapes).
 3. Game background is from NASA.
-4. Source code (Altay.cpp) is not licenced, it can be distributed or modified in any way you like.
+4. Sounds and background musics are from various open source assets and may have been altered to be compatible with the game. More info can be found in the \resources\ folder.
+5. Source code (Altay.cpp) is not licenced, it can be distributed or modified in any way you like.
 
 Altay Tank Game can be found on: http://epicos.itch.io
 
 Developed by G.Çetin, http://twitter.com/gurkanctn
 
-
-IMPORTANT:
-
-The resources (image files and sprites used in the game) are under the folder "[GAMEDIRECTORY]\resources\"
-
-Please copy the resources folder inside your source code folder.
-
+2018 - 2019
