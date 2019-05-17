@@ -12,8 +12,16 @@ BUGS:
 
 
 TODO:
+++ add full screen!
 -- info popup for powerups
 -- add a super bomb powerup
+
+-- add game Story to SplashScreen		Started! 08 May 2019 @engin
+++ add coolDown visuals (not text!)
+++ add firepower cooldown				DONE! 22.04.2019 @engin
+++ full screen mode selection,			DONE! 22.04.2019 @engin
+++ enemy speed increases with Level,	DONE! 22.04.2019 @engin
+++ esc to quit at GameOver screen,		DONE! 22.04.2019 @engin
 
 ++ added sounds and background music	DONE! 09.01.2019
 ++ powerup effectivity timers			DONE! 23.12.2018
@@ -44,18 +52,24 @@ class Altay : public olc::PixelGameEngine
 public:
 	Altay()
 	{
-		sAppName = "Tank Mission ALTAY, 0.9";
+		sAppName = "ALTAY TANK GAME, v1.0";
 	}
 
 private:
 	float fGlobalTime = 0.0f;
+	float fTimerPause = 0.0f;
+	float fTimerText = 0.0f;
 	float fWorldX = 0.0f;
 	float fWorldY = 0.0f;
 	int gameScore;	
 	int nGameState;		//splash screen,  game, endGame, todo: menu
 	int prevGameState;
+	int nDisplayTextPlace;
+	bool bTypeTextDone;
+	bool bGamePaused = false;
 	int nLevel = 1;
 	int HiScore = -10;
+	float RemainingPowerUp = 0;
 	string BestPlayerName[3];
 	bool bStateEntry = true;
 	olc::Sprite *buffBack;
@@ -74,15 +88,19 @@ private:
 		float px = 0.0f;
 		float py = 0.0f;
 		float vx = 0.0f; // speed in X direction
-		float vy = 0.0f;	// speed in Y direction
+		float vy = 0.0f; // speed in Y direction
 		float health = 1000.0f;
 		float speed = 0.80f;
 	};// Define player variables
 	sPlayer Player;
 	float fFireRate = 0.25f;
+
 	float fFireRateAcc = 0.0f;
+	float fCannonTemperature = 0.0f;
 	float FireSpeed = 0.0f;
 	float maxSpeed = 2.0f;		//max speed in U and V
+	float fTimePowerUp = 0.0f;
+
 	olc::Sprite *sprPlayer;
 	
 	struct sEnemy {
@@ -144,69 +162,51 @@ private:
 		float timeout;
 	};
 	list<sActivePowerup> listActivePowerups;
-
-	void SplashScreen() {
-		bStateEntry = true;		//todo: think sth better, a global boolStateEntry is possibly not useful/readable
+	
+	void TypeText(string text, float fElapsedTime) {
+		fTimerText += fElapsedTime;
 		
-
-		// Read HiScores from file
-		{
-			std::fstream fScores("hiscores.txt", std::ios_base::in);
-			struct HiScoreData {
-				int score;
-				char name[3];
-			};
-			HiScoreData hiscores[10];
-			int numscores = 0;
-			while (fScores >> hiscores[numscores].score >> hiscores[numscores].name) {
-				numscores++;
-			}
-			fScores.close();
-			int BestScore = -1;
-			for (int i = 0; i < numscores; i++)
-			{
-				if (hiscores[i].score > BestScore) {
-					BestScore = hiscores[i].score;
-					BestPlayerName[0] = hiscores[i].name[0];
-					BestPlayerName[1] = hiscores[i].name[1];
-					BestPlayerName[2] = hiscores[i].name[2];
-				}
-			}
-
-			HiScore = BestScore;
+		bTypeTextDone = false;
+		int i = nDisplayTextPlace;
+		if (fTimerText > 0.2*std::rand()/RAND_MAX) {
+			fTimerText = 0.0f;
+			nDisplayTextPlace++;
+			i = nDisplayTextPlace;
 		}
-		//Clear(olc::BLACK);
-		Player.px = ScreenWidth() / 2;
-		Player.py = ScreenHeight() / 2;
-		Player.vx = 0;
-		Player.vy = 0;
-		Player.health = 1000.0f;
-		fFireRate = 0.25f;
-		fFireRateAcc = 0.0f;
-		FireSpeed = 0.0f;		//Fire speed for Player
-		maxSpeed = 2.0f;		//max speed in U and V for Player
+		if (i < size(text)) {
+			DrawString(0 + 2, 100 + 2, text.substr(0, i), olc::BLACK, 2);
+			DrawString(0, 100, text.substr(0, i), olc::WHITE, 2);
+		}
+		if (GetKey(olc::Key::SPACE).bHeld) i==size(text);
+		if (i == size(text)) {
+			nDisplayTextPlace = 0;
+			bTypeTextDone = true;
+		}
+		
+	}
+	void SplashScreen(float fElapsedTime) {
+		
+		
 		//std::srand(std::time(nullptr));
 		SetDrawTarget(buffBack);
 		olc::GFX2D::Transform2D t;
 		t.Scale(1.8, 1.8);
 		t.Translate(-160.0f, 0.0f);
 		olc::GFX2D::DrawSprite(sprSplashScreen, t);
-//		DrawSprite(0, 0, sprSplashScreen);
 		//wait for space key to start game
 		DrawString(ScreenWidth() / 20, ScreenHeight() / 3, "ALTAY\n\nTANK GAME", olc::DARK_GREEN, 6);
 		DrawString(ScreenWidth() / 20 - 4, ScreenHeight() / 3 - 4, "ALTAY\n\nTANK GAME", olc::GREEN, 6);
 		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() * 3/ 4, "PRESS SPACE TO START...", olc::BLACK, 3);
 		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() *3/4 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
+
+		//TYPE STORY TEXT TO SCREEN
+		if (!bTypeTextDone) TypeText("This is the story of ALTAY...", fElapsedTime);
+
 		//Draw to Screen now
+
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
-		listBullets.remove_if([&](const sBullet &b) {return true; });
-		listEnemies.remove_if([&](const sEnemy &e) {return true; });
-		listExplosions.remove_if([&](const sExplosion &e) {return true; });
-		listPowerups.remove_if([&](const sPowerup &pu) {return true; });
-		nLevel = 1;
-		gameScore = 0;
-		fGlobalTime = 0;
+
 		//todo: run function "INIT();"
 	}
 	void PlayGame(float fElapsedTime) {
@@ -221,12 +221,14 @@ private:
 		if (GetKey(olc::Key::D).bHeld) Player.vx += Player.speed * fElapsedTime;
 		if (GetKey(olc::Key::W).bHeld) Player.vy -= Player.speed * fElapsedTime;
 		if (GetKey(olc::Key::S).bHeld) Player.vy += Player.speed * fElapsedTime;
-		/*if (GetKey(olc::Key::E).bHeld) {
-			Player.vx = 0.0;
-			Player.vy = 0.0;
-			Player.px = ScreenWidth() / 2;
-			Player.py = ScreenHeight() / 2;
-		}*/
+		if (GetKey(olc::Key::ESCAPE).bHeld) bGamePaused = true;
+		/*
+		if (GetKey(olc::Key::Q).bHeld) {
+			Player.health -= 1000.0f;
+		}
+		*/
+
+		
 		Player.vx = 0.99 * Player.vx;
 		Player.vy = 0.99 * Player.vy;
 
@@ -248,14 +250,19 @@ private:
 		Player.health = min(Player.health, (float)1000);
 
 		//gameScore += fElapsedTime * 100;
-		if (gameScore > nLevel * 10000) nLevel++;
+		if (gameScore > pow(nLevel, 1.2) * 10000) nLevel++;
 
-		if (listEnemies.size() < nLevel) {
+		if (listEnemies.size() < ((nLevel+3)/3) ) {
 			//Generate one Enemy (approx every 2 seconds (1/100 chance)
 			int dicer = 0;
 
 			dicer = std::rand() % (1500 - int(Player.health)) / ((nLevel+3)/3);	//change difficulty according to player Health and LEVEL!
-
+			if (GetKey(olc::Key::E).bHeld) {
+				dicer = 0;
+			}
+			if (GetKey(olc::Key::R).bHeld) {
+				dicer = 1;
+			}
 			if (dicer == 0 && nLevel > 3) {
 				sEnemy e;
 				e.px = std::rand() / RAND_MAX * ScreenWidth() / 4 + ScreenWidth() / 4;
@@ -268,17 +275,22 @@ private:
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
 				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
-				e.firePower = 1.2 * nLevel;
+				e.firePower = 0.5 * nLevel;
 				e.fireRate = 1.2;
 				e.fireRateAcc = 0.0f;
-				e.fireSpeed = 6;
-				e.speedMax = 20;
+				e.fireSpeed = 2;
+				e.speedMax = 20 + (nLevel*1.25);
 				listEnemies.push_back(e);
 			}
 			else if (dicer == 1) {
 				sEnemy e;
-				e.px = std::rand() / (RAND_MAX / ScreenWidth() * 4) + ScreenWidth() / 4;
-				e.py = std::rand() / (RAND_MAX / ScreenHeight() * 4) + ScreenHeight() / 4;
+				e.px = Player.px;
+				e.py = Player.py;
+								
+				while ((Player.px - e.px < 100) && (Player.py - e.py < 100)) {
+					e.px = std::rand() / (RAND_MAX / ScreenWidth() * 4) + ScreenWidth() / 4;
+					e.py = std::rand() / (RAND_MAX / ScreenHeight() * 4) + ScreenHeight() / 4;
+				}
 				e.sprEnemy = new olc::Sprite("resources\\enemy2.png");
 				e.vx = 10 * (std::rand() % 20 - 10);
 				e.vy = 10 * (std::rand() % 20 - 10);
@@ -287,22 +299,23 @@ private:
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
 				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
-				e.firePower = 2 * (nLevel - 2);
+				e.firePower = 0.5*(nLevel - 1);
 				e.fireRate = 1.5;
 				e.fireRateAcc = 0.0f;
-				e.speedMax = 10;
+				e.fireSpeed = 2;
+				e.speedMax = 10 + (nLevel*1.25);
 				listEnemies.push_back(e);
 			}
 			else if (dicer == 201) {
 				sPowerup pu;
 				pu.sprPowerUp = new olc::Sprite("resources\\powerups\\PowerUp_01.png");
-				pu.px = (std::rand() / (RAND_MAX / ScreenWidth() * 4)) + ScreenWidth() / 2;
-				pu.py = (std::rand() / (RAND_MAX / ScreenHeight() * 4)) + ScreenHeight() / 2;
+				pu.px = (std::rand() / (RAND_MAX / ScreenWidth() * 1)); //+ScreenWidth();
+				pu.py = (std::rand() / (RAND_MAX / ScreenHeight() * 1)); //+ScreenHeight();
 				pu.vx = 0.0f;  //10 * (std::rand() % 20 - 10);
 				pu.vy = 0.0f;  //10 * (std::rand() % 20 - 10);
 				pu.fBulletHitPoint = 0;
 				pu.fBulletSpeedFactor = 0.95f;
-				pu.fPlayerFireRate = 0.125f;
+				pu.fPlayerFireRate = 0.85f;
 				pu.fPlayerHealth = 20.0f;
 				pu.fScore = 150;
 				pu.fPlayerMaxSpeed = 2.5;
@@ -319,16 +332,16 @@ private:
 
 		//first click immediate fire
 		if (fFireRateAcc < fFireRate) fFireRateAcc += fElapsedTime;
-
+		fCannonTemperature = max(0.0f, fCannonTemperature - RemainingPowerUp - fElapsedTime);		//cool down
 		//Generate new bullet as mouse button is held down
 		if (GetMouse(0).bHeld)
 		{
-			if (fFireRateAcc >= fFireRate)
+			if (fFireRateAcc >= fFireRate && fCannonTemperature < 5.0f)
 			{
 				//srand(time(NULL));
 				//fFireRateAcc -= fFireRate;
 				fFireRateAcc = 0;
-
+				fCannonTemperature += 1.0f;		//heat up
 				//Generate one Bullet for Player
 				sBullet b;
 				olc::SOUND::PlaySample(sndFireCannon);
@@ -353,7 +366,7 @@ private:
 			b.py += b.vy * fElapsedTime;
 			for (auto &o : listEnemies)
 			{
-				if (!b.bEnemyFire && (abs(o.px - b.px) < 40) && (abs(o.py - b.py) < 40))	//check tanks vs bullets
+				if (!b.bEnemyFire && (abs(o.px - b.px) < 40) && (abs(o.py - b.py) < 40))	//check enemies vs playerbullets
 				{
 					o.health = o.health - b.hitPoint;
 					o.vx = o.vx * b.speedFactor;
@@ -405,10 +418,21 @@ private:
 			e.py += e.vy * fElapsedTime;
 			//float hdgReq = atan2((Player.py - e.py), (Player.px - e.px)) + 1.5708f;
 			//if (hdgReq < 0) hdgReq += 2.0f * PI;
+			if ((Player.px - e.px < 30) && (Player.py - e.py < 30)) {
+				Player.health -= 20;	//player receives damage 
+				e.health = -1; // enemy is dead upon collision
+				olc::SOUND::PlaySample(sndExplode);
+				sExplosion x;
+				x.px = Player.px;
+				x.py = Player.py;
+				x.sizeMax = 20;
+				x.currentSize = 0;
+				listExplosions.push_back(x);
+			}
 			e.hdg = atan2((Player.py - e.py), (Player.px - e.px)) + 1.5708f;		//todo: implement quickest turn
 			//e.hdg += 1.5708f;
-			e.vx = (0.5 * (Player.px - 120 * cos(e.hdg - 1.5708f) - e.px));		//stand at an offset
-			e.vy = (0.5 * (Player.py - 120 * sin(e.hdg - 1.5708f) - e.py));		//stand at an offset
+			e.vx = (0.5 * (Player.px - 40 * cos(e.hdg - 1.5708f) - e.px));		//stand at an offset
+			e.vy = (0.5 * (Player.py - 40 * sin(e.hdg - 1.5708f) - e.py));		//stand at an offset
 			e.vx = Saturate(e.vx, -e.speedMax, +e.speedMax);
 			e.vy = Saturate(e.vy, -e.speedMax, +e.speedMax);
 			e.fireRateAcc += fElapsedTime;
@@ -422,7 +446,7 @@ private:
 				b.vy = 20 * e.firePower * sin(e.hdg - 1.5708f);
 				b.hasExploded = false;
 				b.bEnemyFire = true;
-				b.speed = 10;
+				b.speed = e.fireSpeed;
 				b.speedFactor = 0.95;
 				listBullets.push_back(b);
 				e.fireRateAcc = 0.0f;	//reload
@@ -453,12 +477,12 @@ private:
 				Player.health += pu.fPlayerHealth;
 				maxSpeed = pu.fPlayerMaxSpeed;
 				pu.timer = pu.timeout;
-				fFireRate = pu.fPlayerFireRate;
+				fFireRate = pu.fPlayerFireRate * fFireRate;
 				FireSpeed = 10;
 				gameScore += pu.fScore;
 				sActivePowerup apu;
 				apu.timer = 0.0f;
-				apu.timeout = 10.0f;
+				apu.timeout = 10.0f + fTimePowerUp;
 				listActivePowerups.push_back(apu);
 				olc::SOUND::PlaySample(sndPowerUp1);
 			}
@@ -471,7 +495,9 @@ private:
 			apu.timer += fElapsedTime;
 			if (apu.timer >= apu.timeout) {
 				//todo: stop the effects of this powerup
-				fFireRate = 0.25f;
+				fFireRate = fFireRate / 0.85;
+			}
+			else {
 			}
 		}
 		listActivePowerups.remove_if([&](const sActivePowerup &apu) {return apu.timer >= apu.timeout; });
@@ -524,16 +550,19 @@ private:
 		}
 		//draw ActivePowerUps
 		{
-			float RemainingPowerUp = 0;
+			RemainingPowerUp = 0;
 			for (auto &apu : listActivePowerups)
 			{
 				RemainingPowerUp = max(apu.timeout - apu.timer, RemainingPowerUp);
 			}
+
 			if (RemainingPowerUp > 0) {
 				SetPixelMode(olc::Pixel::MASK);
-				FillRect(20, 55, RemainingPowerUp * 10, 20, olc::BLUE);
-				DrawString(20, 60, "PU", olc::WHITE);
+				FillRect(20, 55, RemainingPowerUp * 8, 16, olc::BLUE);
+				//DrawString(20, 60, "PU", olc::WHITE);
 				SetPixelMode(olc::Pixel::NORMAL);
+				fTimePowerUp = RemainingPowerUp;
+				DrawString(20, 60, "Dry Ice", olc::WHITE);	//debug
 			}
 		}
 		//draw bullets
@@ -571,7 +600,7 @@ private:
 			DrawString(121, 11, to_string(gameScore), olc::BLACK, 2);
 			DrawString(120, 10, to_string(gameScore), olc::WHITE, 2);
 			//cout << BestPlayerName << " ";
-			DrawString(21, 31, BestPlayerName[0] + BestPlayerName[1] + BestPlayerName[2], olc::BLACK, 2);		//BUG: TODO: PROBLEM HERE (DRAWS EXTRA CHARACTERS!)
+			DrawString(21, 31, BestPlayerName[0] + BestPlayerName[1] + BestPlayerName[2], olc::BLACK, 2);
 			DrawString(20, 30, BestPlayerName[0] + BestPlayerName[1] + BestPlayerName[2], olc::RED, 2);
 			DrawString(121, 31, to_string(BestScore), olc::BLACK, 2);
 			DrawString(120, 30, to_string(BestScore), olc::RED, 2);
@@ -586,6 +615,8 @@ private:
 			DrawRect(ScreenWidth() / 2 - HealthBarLength / 2, HealthBarLength / 5, HealthBarLength, HealthBarLength / 5, olc::BLACK);
 			if (Player.health < 200) FillRect(ScreenWidth() / 2 - HealthBarLength / 2 + 1, 21, int(Player.health / dHealth) - 1, 19, olc::RED);
 			else FillRect(ScreenWidth() / 2 - HealthBarLength / 2 + 1, 21, int(Player.health / dHealth) - 1, 19, olc::GREEN);
+			FillRect(20, 80, fCannonTemperature*8, 16, (fCannonTemperature<4)? olc::BLUE : (fCannonTemperature<5) ? olc::DARK_RED : olc::RED );
+
 			//Draw to Screen now
 			SetDrawTarget(nullptr);
 			DrawSprite(0, 0, buffBack);
@@ -628,6 +659,9 @@ private:
 		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 2 + 150, "PRESS SPACE TO START AGAIN.", olc::BLACK, 2);
 		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 2 + 146, "PRESS SPACE TO START AGAIN.", olc::WHITE, 2);
 		//Draw to Screen now
+		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 3 + 150, "PRESS ESC TO QUIT.", olc::BLACK, 2);
+		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 3 + 146, "PRESS ESC TO QUIT.", olc::WHITE, 2);
+
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
 	}
@@ -662,8 +696,58 @@ public:
 	{
 
 		if (nGameState == 0) {
-			if (prevGameState != nGameState) olc::SOUND::PlaySample(sndSplashScreen, true); // Plays the sample in looping mode
-			SplashScreen();
+			if (prevGameState != nGameState) { //run only once
+				olc::SOUND::PlaySample(sndSplashScreen, true); // Starts to Play the sample in looping mode
+				//ReadGameStoryFromFile();
+
+				//InitializeGame();
+				// Read HiScores from file
+				{
+					std::fstream fScores("hiscores.txt", std::ios_base::in);
+					struct HiScoreData {
+						int score;
+						char name[3];
+					};
+					HiScoreData hiscores[10];
+					int numscores = 0;
+					while (fScores >> hiscores[numscores].score >> hiscores[numscores].name) {
+						numscores++;
+					}
+					fScores.close();
+					int BestScore = -1;
+					for (int i = 0; i < numscores; i++)
+					{
+						if (hiscores[i].score > BestScore) {
+							BestScore = hiscores[i].score;
+							BestPlayerName[0] = hiscores[i].name[0];
+							BestPlayerName[1] = hiscores[i].name[1];
+							BestPlayerName[2] = hiscores[i].name[2];
+						}
+					}
+
+					HiScore = BestScore;
+				}
+				// set Initial Values
+				//Clear(olc::BLACK);
+				Player.px = ScreenWidth() / 2;
+				Player.py = ScreenHeight() / 2;
+				Player.vx = 0;
+				Player.vy = 0;
+				Player.health = 1000.0f;
+				fFireRate = 0.25f;
+				fFireRateAcc = 0.0f;
+				FireSpeed = 0.0f;		//Fire speed for Player
+				maxSpeed = 2.0f;		//max speed in U and V for Player
+				listBullets.remove_if([&](const sBullet &b) {return true; });
+				listEnemies.remove_if([&](const sEnemy &e) {return true; });
+				listExplosions.remove_if([&](const sExplosion &e) {return true; });
+				listPowerups.remove_if([&](const sPowerup &pu) {return true; });
+				RemainingPowerUp = 0;
+				nLevel = 1;
+				gameScore = 0;
+				fGlobalTime = 0.0f;
+			}
+			SplashScreen(fElapsedTime);
 			prevGameState = nGameState;
 			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 1;
 		}
@@ -676,6 +760,7 @@ public:
 			GameOver(fElapsedTime);
 			prevGameState = nGameState;
 			if (GetKey(olc::Key::SPACE).bPressed) nGameState = 0;
+			if (GetKey(olc::Key::ESCAPE).bPressed) nGameState = -1;
 		}
 		else if (nGameState == 1) {				// GAME IS ON
 			if (prevGameState != nGameState) {
@@ -683,10 +768,26 @@ public:
 				olc::SOUND::StopSample(sndGameOver);
 				olc::SOUND::PlaySample(sndGameBackground, true);
 			}
-			PlayGame(fElapsedTime);
+			if (!bGamePaused) PlayGame(fElapsedTime);
+			if (bGamePaused) {
+				fTimerPause += fElapsedTime;
+				FillCircle(ScreenWidth() / 2, ScreenHeight() / 2, ScreenHeight() / 3, olc::RED);
+				DrawString(ScreenWidth() / 2 - 150, ScreenHeight() / 2, "Game Paused... \n PRESS SPACE TO PLAY ! \n PRESS Q to Quit...", olc::WHITE, 2);
+				if (fTimerPause > 1.0 && GetKey(olc::Key::SPACE).bHeld) {
+					bGamePaused = false;
+					fTimerPause = 100.0f;
+				}
+				if (fTimerPause > 1.0 && GetKey(olc::Key::Q).bHeld) {
+					nGameState = 999;
+				}
+			}
 			prevGameState = nGameState;
 			if (Player.health < 0) nGameState = 999;
 			// if (GetKey(olc::Key::SPACE).bPressed) nGameState = 999; //FOR TEST
+		}
+		
+		else if (nGameState == -1) {				//QUIT NOW
+			return false;
 		}
 		return true;
 	}
@@ -701,8 +802,25 @@ public:
 
 int main()
 {
+	
+	bool bFullScreen = false;
+	cout << "PRESS ENTER TO PLAY FULL SCREEN! Or Press any key + Enter to play in Window Mode.";
+	cout << endl;
+	while (true) {
+		//cout << getchar();
+		int temp = getchar();
+		if (temp == 10) {
+			bFullScreen = true;
+			break;
+		}
+		else if (temp != 10) {
+			bFullScreen = false;
+			break;
+		}
+	}
+
 	Altay game;
-	if (game.Construct(800, 600, 1, 1))
+	if (game.Construct(800, 600, 1, 1, bFullScreen))
 		game.Start();
 
 	return 0;
