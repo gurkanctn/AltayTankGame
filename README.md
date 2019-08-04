@@ -17,3 +17,30 @@ Altay Tank Game web page is on: http://epicos.itch.io
 
 
 Important: This set of C++ source codes may require Visual Studio 2015+ to build and debug.
+
+--- GAME STORY ---
+
+Year 2144...
+
+Life on Earth is coming to an end. 
+Humanity's last hope is to colonize Mars. 
+But,
+It won't be easy.
+
+Humans will not be alone on the Red Planet. 
+There are unidentified hostile signals coming from the Mars planetary surface. 
+Humanity needs to secure a place to start sending colony ships. 
+
+Humanity United Nations (HUN) organization recently selected Turkey for this suicide mission. 
+Altay, the most sophisticated war-machine ever, has to investigate hostile incomings, seek them and destroy them to secure this planet of "hope". 
+
+It is time to be a hero not only for...
+a country, 
+a planet, 
+but all of us, the human species. 
+
+And pilot!
+
+You are selected for this most honorable mission. 
+
+Good luck and make us proud!
