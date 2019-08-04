@@ -52,7 +52,7 @@ class Altay : public olc::PixelGameEngine
 public:
 	Altay()
 	{
-		sAppName = "ALTAY TANK GAME, v1.0";
+		sAppName = "ALTAY TANK GAME, v1.2";
 	}
 
 private:
@@ -83,6 +83,7 @@ private:
 	int sndFireCannon;
 	int sndExplode;
 	int sndPowerUp1;
+	int nTest;
 
 	struct sPlayer {
 		float px = 0.0f;
@@ -200,7 +201,7 @@ private:
 		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() *3/4 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
 
 		//TYPE STORY TEXT TO SCREEN
-		if (!bTypeTextDone) TypeText("This is the story of ALTAY...", fElapsedTime);
+		if (!bTypeTextDone) TypeText("This is the story of ALTAY... \n... GET READY!!! ...", fElapsedTime);
 
 		//Draw to Screen now
 
@@ -224,11 +225,16 @@ private:
 		if (GetKey(olc::Key::ESCAPE).bHeld) bGamePaused = true;
 		/*
 		if (GetKey(olc::Key::Q).bHeld) {
-			Player.health -= 1000.0f;
+			olc::SOUND::PlaySample(nTest%6);
+		}
+		if (GetKey(olc::Key::E).bHeld) {
+			nTest = (nTest+1)%3;
+			if (nTest == 0) olc::SOUND::PlaySample(sndFireCannon);
+			else if (nTest == 1) olc::SOUND::PlaySample(sndExplode);
+			else if (nTest == 2) olc::SOUND::PlaySample(sndPowerUp1);
 		}
 		*/
 
-		
 		Player.vx = 0.99 * Player.vx;
 		Player.vy = 0.99 * Player.vy;
 
@@ -252,11 +258,11 @@ private:
 		//gameScore += fElapsedTime * 100;
 		if (gameScore > pow(nLevel, 1.2) * 10000) nLevel++;
 
-		if (listEnemies.size() < ((nLevel+3)/3) ) {
+		if (listEnemies.size() < (nLevel+3) ) {
 			//Generate one Enemy (approx every 2 seconds (1/100 chance)
 			int dicer = 0;
 
-			dicer = std::rand() % (1500 - int(Player.health)) / ((nLevel+3)/3);	//change difficulty according to player Health and LEVEL!
+			dicer = std::rand() % (500) / (nLevel + 3);	//change difficulty according to player Health and LEVEL!
 			if (GetKey(olc::Key::E).bHeld) {
 				dicer = 0;
 			}
@@ -265,8 +271,13 @@ private:
 			}
 			if (dicer == 0 && nLevel > 3) {
 				sEnemy e;
-				e.px = std::rand() / RAND_MAX * ScreenWidth() / 4 + ScreenWidth() / 4;
-				e.py = std::rand() / RAND_MAX * ScreenHeight() / 4 + ScreenHeight() / 4;
+				e.px = Player.px;
+				e.py = Player.py;
+
+				while (( pow(Player.px - e.px, 2.0) + pow(Player.py - e.py, 2.0) ) < 20000) {
+					e.px = std::rand() / (RAND_MAX / ScreenWidth());
+					e.py = std::rand() / (RAND_MAX / ScreenHeight());
+				}
 				e.sprEnemy = new olc::Sprite("resources\\enemy.png");
 				e.vx = 10 * (std::rand() % 20 - 10);
 				e.vy = 10 * (std::rand() % 20 - 10);
@@ -275,7 +286,7 @@ private:
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
 				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
-				e.firePower = 0.5 * nLevel;
+				e.firePower = 0.5 * (nLevel > 2) ? 10 : 0.0f;
 				e.fireRate = 1.2;
 				e.fireRateAcc = 0.0f;
 				e.fireSpeed = 2;
@@ -287,9 +298,9 @@ private:
 				e.px = Player.px;
 				e.py = Player.py;
 								
-				while ((Player.px - e.px < 100) && (Player.py - e.py < 100)) {
-					e.px = std::rand() / (RAND_MAX / ScreenWidth() * 4) + ScreenWidth() / 4;
-					e.py = std::rand() / (RAND_MAX / ScreenHeight() * 4) + ScreenHeight() / 4;
+				while ((pow(Player.px - e.px, 2.0) + pow(Player.py - e.py, 2.0)) < 20000) {
+					e.px = std::rand() / (RAND_MAX / ScreenWidth());
+					e.py = std::rand() / (RAND_MAX / ScreenHeight());
 				}
 				e.sprEnemy = new olc::Sprite("resources\\enemy2.png");
 				e.vx = 10 * (std::rand() % 20 - 10);
@@ -299,14 +310,14 @@ private:
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
 				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
-				e.firePower = 0.5*(nLevel - 1);
+				e.firePower = 0.5*(nLevel > 2) ? 10 : 0.0f;
 				e.fireRate = 1.5;
 				e.fireRateAcc = 0.0f;
 				e.fireSpeed = 2;
 				e.speedMax = 10 + (nLevel*1.25);
 				listEnemies.push_back(e);
 			}
-			else if (dicer == 201) {
+			else if (abs(dicer-10) < 1 ) {
 				sPowerup pu;
 				pu.sprPowerUp = new olc::Sprite("resources\\powerups\\PowerUp_01.png");
 				pu.px = (std::rand() / (RAND_MAX / ScreenWidth() * 1)); //+ScreenWidth();
@@ -318,8 +329,8 @@ private:
 				pu.fPlayerFireRate = 0.85f;
 				pu.fPlayerHealth = 20.0f;
 				pu.fScore = 150;
-				pu.fPlayerMaxSpeed = 2.5;
-				pu.timeout = 10.0f;
+				pu.fPlayerMaxSpeed = 4.0;
+				pu.timeout = 15.0f;
 				pu.timer = 0.0f;
 				listPowerups.push_back(pu);
 
@@ -341,7 +352,7 @@ private:
 				//srand(time(NULL));
 				//fFireRateAcc -= fFireRate;
 				fFireRateAcc = 0;
-				fCannonTemperature += 1.0f;		//heat up
+				fCannonTemperature += 0.6f;		//heat up
 				//Generate one Bullet for Player
 				sBullet b;
 				olc::SOUND::PlaySample(sndFireCannon);
@@ -418,14 +429,14 @@ private:
 			e.py += e.vy * fElapsedTime;
 			//float hdgReq = atan2((Player.py - e.py), (Player.px - e.px)) + 1.5708f;
 			//if (hdgReq < 0) hdgReq += 2.0f * PI;
-			if ((Player.px - e.px < 30) && (Player.py - e.py < 30)) {
-				Player.health -= 20;	//player receives damage 
+			if ((pow(Player.px - e.px, 2.0) + pow(Player.py - e.py, 2.0)) < 1200) {
+				Player.health -= 600;	//player receives damage 
 				e.health = -1; // enemy is dead upon collision
 				olc::SOUND::PlaySample(sndExplode);
 				sExplosion x;
 				x.px = Player.px;
 				x.py = Player.py;
-				x.sizeMax = 20;
+				x.sizeMax = 10;
 				x.currentSize = 0;
 				listExplosions.push_back(x);
 			}
@@ -673,6 +684,7 @@ public:
 	bool OnUserCreate() override
 	{
 		// Called once at the start, so create things here
+		// todo: report missing or bad files (if sndXXX == -1)
 		olc::SOUND::InitialiseAudio();
 		sndSplashScreen = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");
 		sndGameBackground = olc::SOUND::LoadAudioSample("resources\\music\\GameBackground.wav");
@@ -681,6 +693,7 @@ public:
 		sndFireCannon = olc::SOUND::LoadAudioSample("resources\\soundFX\\FireCannon.wav");
 		sndExplode = olc::SOUND::LoadAudioSample("resources\\soundFX\\Explode.wav");
 		sndPowerUp1 = olc::SOUND::LoadAudioSample("resources\\soundFX\\PowerUp1.wav");		//test
+		if (sndPowerUp1 == -1) sndPowerUp1 = sndExplode; //load default sound if PowerUp1.wav is broken!
 
 		sprPlayer = new olc::Sprite("resources\\tank.png");
 		sprBackground = new olc::Sprite("resources\\planet.png");
