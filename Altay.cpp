@@ -8,15 +8,14 @@ const double PI = 3.141592653589793238463;
 
 /* 
 BUGS:
--- powerup sometimes dies prematurely
-
 
 TODO:
 ++ add full screen!
 -- info popup for powerups
--- add a super bomb powerup
+-- add a super bomb powerup or cheat key!
 
--- add game Story to SplashScreen		Started! 08 May 2019 @engin
+++ auto navigation to waypoints 1 to 4 (using keys 1 to 4) TAB to turn on/off auto navigation
+++ add game Story to SplashScreen		finished 2020; Started! 08 May 2019 @engin
 ++ add coolDown visuals (not text!)
 ++ add firepower cooldown				DONE! 22.04.2019 @engin
 ++ full screen mode selection,			DONE! 22.04.2019 @engin
@@ -84,6 +83,7 @@ private:
 	int sndExplode;
 	int sndPowerUp1;
 	int nTest;
+	string sStory;
 
 	struct sPlayer {
 		float px = 0.0f;
@@ -164,29 +164,62 @@ private:
 	};
 	list<sActivePowerup> listActivePowerups;
 	
-	void TypeText(string text, float fElapsedTime) {
+
+	struct sWP{
+		int id;
+		float x;
+		float y;
+	};
+	list<sWP> listPath;
+	
+	sWP tempWP;
+	sWP targetWP;
+	bool bAutoNav = false;
+	int targetWPid = 1;
+
+	float tunerX = 1.0;		//autopilot X gain
+	float tunerY = 1.0;     //autopilot Y gain
+
+
+	string readStory(string filename)                                            // @mbozzi / @Thomas1965 : via stringstream buffer
+	{
+		stringstream buffer;
+		buffer << ifstream(filename).rdbuf();
+		return buffer.str();
+	}
+	void TypeStory(string text, float fElapsedTime) {
 		fTimerText += fElapsedTime;
 		
 		bTypeTextDone = false;
 		int i = nDisplayTextPlace;
-		if (fTimerText > 0.2*std::rand()/RAND_MAX) {
+		if (fTimerText > 0.01*std::rand()/RAND_MAX) {
 			fTimerText = 0.0f;
 			nDisplayTextPlace++;
 			i = nDisplayTextPlace;
 		}
 		if (i < size(text)) {
-			DrawString(0 + 2, 100 + 2, text.substr(0, i), olc::BLACK, 2);
-			DrawString(0, 100, text.substr(0, i), olc::WHITE, 2);
+			DrawString(0 + 2, 5 + 1, text.substr(0, i), olc::BLACK, 1);
+			DrawString(0, 5, text.substr(0, i), olc::WHITE, 1);
 		}
 		if (GetKey(olc::Key::SPACE).bHeld) i==size(text);
 		if (i == size(text)) {
 			nDisplayTextPlace = 0;
+			//TODO add a wait counter for 3 seconds before killing the Story sequence
 			bTypeTextDone = true;
 		}
 		
 	}
+	
+	void setTargetWP(int WPID) {
+		for (auto &WP : listPath)
+		{
+			if ((WP.id) == targetWPid) {
+				targetWP = WP;
+			}
+		}
+	}
+
 	void SplashScreen(float fElapsedTime) {
-		
 		
 		//std::srand(std::time(nullptr));
 		SetDrawTarget(buffBack);
@@ -201,10 +234,9 @@ private:
 		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() *3/4 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
 
 		//TYPE STORY TEXT TO SCREEN
-		if (!bTypeTextDone) TypeText("This is the story of ALTAY... \n... GET READY!!! ...", fElapsedTime);
+		if (!bTypeTextDone) TypeStory(sStory, fElapsedTime);
 
 		//Draw to Screen now
-
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
 
@@ -213,16 +245,21 @@ private:
 	void PlayGame(float fElapsedTime) {
 		int nMouseX = GetMouseX();
 		int nMouseY = GetMouseY();
+		int nMouseWheel = GetMouseWheel();
+		
+		//sWP targetWP = tempWP;
+
 		//update Player
 		float dx = (float)nMouseX - Player.px;
 		float dy = (float)nMouseY - Player.py;
 		float fHeading = atan2(dy, dx) + 1.5708f;	//rotate 90 deg to match with image
 		// Move Player
-		if (GetKey(olc::Key::A).bHeld) Player.vx -= Player.speed * fElapsedTime;
-		if (GetKey(olc::Key::D).bHeld) Player.vx += Player.speed * fElapsedTime;
-		if (GetKey(olc::Key::W).bHeld) Player.vy -= Player.speed * fElapsedTime;
-		if (GetKey(olc::Key::S).bHeld) Player.vy += Player.speed * fElapsedTime;
+		if (GetKey(olc::Key::A).bHeld) Player.vx -= Player.speed * fElapsedTime; //accelerate LEFT
+		if (GetKey(olc::Key::D).bHeld) Player.vx += Player.speed * fElapsedTime; //accelerate RIGHT
+		if (GetKey(olc::Key::W).bHeld) Player.vy -= Player.speed * fElapsedTime; //accelerate UP
+		if (GetKey(olc::Key::S).bHeld) Player.vy += Player.speed * fElapsedTime; //accelerate DOWN
 		if (GetKey(olc::Key::ESCAPE).bHeld) bGamePaused = true;
+		if (GetKey(olc::Key::TAB).bReleased) bAutoNav = !bAutoNav;
 		/*
 		if (GetKey(olc::Key::Q).bHeld) {
 			olc::SOUND::PlaySample(nTest%6);
@@ -234,7 +271,38 @@ private:
 			else if (nTest == 2) olc::SOUND::PlaySample(sndPowerUp1);
 		}
 		*/
+		if (GetKey(olc::Key::K1).bHeld) targetWPid = 1;
+		if (GetKey(olc::Key::K2).bHeld) targetWPid = 2;
+		if (GetKey(olc::Key::K3).bHeld) targetWPid = 3;
+		if (GetKey(olc::Key::K4).bHeld) targetWPid = 4; 
+		
+		setTargetWP(targetWPid);
 
+		if (GetKey(olc::Key::E).bHeld) { // Increase TunerX
+		    tunerX = 1.1 * tunerX;
+		}
+		if (GetKey(olc::Key::R).bHeld) { // Increase TunerX
+			tunerX = 0.9 * tunerX;
+		}
+		if (GetKey(olc::Key::T).bHeld) { // Increase TunerX
+			tunerY = 1.1 * tunerY;
+		}
+		if (GetKey(olc::Key::Y).bHeld) { // Increase TunerX
+			tunerY = 0.9 * tunerY;
+		}
+
+		// navigate to targetWP, using simple Proportional gain, change TargetWP, once arrived
+		if (bAutoNav) {
+			if ((pow((targetWP.x - Player.px), 2) + pow((targetWP.y - Player.py), 2) < 250)) {
+				targetWPid++;
+				if (targetWPid > 4) targetWPid = 1; //4 = nMaxWPID
+				setTargetWP(targetWPid);
+			}
+			Player.vx = (targetWP.x - Player.px) * 0.05 * tunerX;
+			Player.vy = (targetWP.y - Player.py) * 0.05 * tunerY;
+		}
+		
+		
 		Player.vx = 0.99 * Player.vx;
 		Player.vy = 0.99 * Player.vy;
 
@@ -256,9 +324,13 @@ private:
 		Player.health = min(Player.health, (float)1000);
 
 		//gameScore += fElapsedTime * 100;
-		if (gameScore > pow(nLevel, 1.2) * 10000) nLevel++;
+		if (gameScore > pow(nLevel, 1.2) * 10000) {
+			nLevel++;
+			maxSpeed = maxSpeed * 1.015;
+			Player.speed = Player.speed * 1.025;
+		}
 
-		if (listEnemies.size() < (nLevel+3) ) {
+		if (listEnemies.size() < (0.3 * nLevel +3) ) {
 			//Generate one Enemy (approx every 2 seconds (1/100 chance)
 			int dicer = 0;
 
@@ -519,6 +591,14 @@ private:
 		DrawPartialSprite(0, 0, sprBackground, 300 + fWorldX, 200 + fWorldY, ScreenWidth(), ScreenHeight());	//move the background if the player approaches the sides (until size of image of course!)
 		fGlobalTime += fElapsedTime;
 
+
+		//draw Patrol Path
+		{
+			for (auto &WP : listPath)
+			{
+				DrawCircle(WP.x, WP.y, 10, olc::RED);
+			}
+		}
 		//draw player
 		{
 			olc::GFX2D::Transform2D t;
@@ -632,6 +712,12 @@ private:
 			SetDrawTarget(nullptr);
 			DrawSprite(0, 0, buffBack);
 		}
+
+		//Draw Debug Stuff
+		{
+			if (bAutoNav) FillRect(220, 20, 10, 10, olc::WHITE);
+			FillRect(240, 20, int(tunerX * 5), int(tunerY * 5), olc::BLACK);
+		}
 	}
 	void GameOver(float fElapsedTime) {
 		if (bStateEntry) {
@@ -708,10 +794,11 @@ public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
 
-		if (nGameState == 0) {
+		if (nGameState == 0) {	//SplashScreen
 			if (prevGameState != nGameState) { //run only once
 				olc::SOUND::PlaySample(sndSplashScreen, true); // Starts to Play the sample in looping mode
 				//ReadGameStoryFromFile();
+				sStory = readStory("GameStory.txt");
 
 				//InitializeGame();
 				// Read HiScores from file
@@ -742,6 +829,24 @@ public:
 				}
 				// set Initial Values
 				//Clear(olc::BLACK);
+
+
+				// SET Waypoints for the auto-patrol PATH
+
+				int WPX[4];
+				int WPY[4];
+				WPX[0] = 100;					WPY[0] = 100;
+				WPX[1] = 100;					WPY[1] = ScreenHeight() - 100;
+				WPX[2] = ScreenWidth() - 100;	WPY[2] = ScreenHeight() - 100;
+				WPX[3] = ScreenWidth() - 100;	WPY[3] = 100;
+
+				for (int i = 0; i < 4; i++) {
+					tempWP.id = i + 1;
+					tempWP.x = WPX[i];
+					tempWP.y = WPY[i];
+					listPath.push_back(tempWP);
+				}
+				// waypoints are in list listPath.
 				Player.px = ScreenWidth() / 2;
 				Player.py = ScreenHeight() / 2;
 				Player.vx = 0;
@@ -798,7 +903,6 @@ public:
 			if (Player.health < 0) nGameState = 999;
 			// if (GetKey(olc::Key::SPACE).bPressed) nGameState = 999; //FOR TEST
 		}
-		
 		else if (nGameState == -1) {				//QUIT NOW
 			return false;
 		}

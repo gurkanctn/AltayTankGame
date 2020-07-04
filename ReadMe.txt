@@ -1,14 +1,15 @@
-ALTAY Tank Game v0.9
+ALTAY Tank Game v1.3
+by Gürkan Çetin
 
 As a hobby coder, I'd like to hear your comments and suggestions towards the game. You can contact me either on the game's web page on http://epicos.itch.io or through Twitter @gurkanctn.
 
-Thank you for downloading and trying Altay.
+Thank you for downloading and playing Altay Tank Game.
 
-The game is under development, so features are being added weekly.
+The game is under development. New features are being added, and your ideas can be implemented too.
 
 I hope you enjoy this small game!
 
-Feel free to share this game with your friends, neighbours, colleagues, and other relatives :)
+Feel free to share this game with your friends, neighbours, colleagues, and family :)
 
 ========================================
 GAME PLAY
@@ -17,11 +18,13 @@ Use A,S,D,W keys to move your tank.
 You can aim and shoot with the mouse.
 Enemies can fire, so run away from enemy fire.
 Collect powerups to increase your fire power.
+You can toggle the AUTOPILOT using the TAB key.
 
 ========================================
 
 Credits and Thanks:
 Javidx9 @ OneLoneCoder.com : For the Pixel Game Engine
+Engin : For valuable critics about the gameplay
 
 
 LICENCES
@@ -33,6 +36,10 @@ LICENCES
 
 Altay Tank Game can be found on: http://epicos.itch.io
 
-Developed by G.Çetin, http://twitter.com/gurkanctn
+FOR RELEASE NOTES Refer to http://epicos.itch.io
 
-2018 - 2019
+Developed by Gürkan Çetin.
+
+http://twitter.com/gurkanctn
+
+2018 - 2020
