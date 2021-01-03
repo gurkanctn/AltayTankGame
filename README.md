@@ -1,6 +1,8 @@
 # AltayTankGame
 ## Download link: https://epicos.itch.io/altay-tank-game
 
+Gameplay link: https://www.youtube.com/watch?v=9LFq-MUA6D4
+
 ## LICENCES
 
 1. OLC Pixel Game Engine, refer to www.onelonecoder.com
