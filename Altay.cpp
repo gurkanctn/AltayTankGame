@@ -42,7 +42,9 @@ private:
 	int gameScore;	
 	int nGameState;		//splash screen,  game, endGame
 	int prevGameState;
-	int nDisplayTextPlace;
+	bool AssetsLoaded = false;
+	size_t nDisplayTextPlace = 0;
+	size_t nDisplayTextStart = 0;
 	float fTextDisplayDuration = 0.0f;
 	bool bTypeTextDone;
 	bool bGamePaused = false;
@@ -179,16 +181,33 @@ private:
 		fTimerText += fElapsedTime;
 		
 		bTypeTextDone = false;
-		int i = nDisplayTextPlace;
-		if (fTimerText > 0.01*std::rand()/RAND_MAX) {
+		size_t i = nDisplayTextPlace;
+		size_t j = nDisplayTextStart;
+		float fDuration = 0.0f;
+		switch (text[i]) {
+			case '\n':
+				fDuration = 1.0f;
+				break;
+			default:
+				fDuration = 0.15f * std::rand() / RAND_MAX;
+		}
+			
+		if (text[i] == '\n') {
+			nDisplayTextStart = i;
+			//fTimerText = fElapsedTime * 0.9;
+		}
+
+		if (fTimerText > fDuration) {
 			fTimerText = 0.0f;
 			nDisplayTextPlace++;
 			i = nDisplayTextPlace;
 		}
-		//if (i < size(text)) {
-			DrawString(0 + 2, 5 + 1, text.substr(0, i), olc::BLACK, 1);
-			DrawString(0, 5, text.substr(0, i), olc::WHITE, 1);
-		//}
+		//char newLine = '\n';
+		if (i <= size(text)) {
+			cout << j << " - " << i << endl;	
+			DrawString(0 + 2, int(ScreenHeight() * 4.0f / 5.0f + 2.0f), text.substr(j, i-j), olc::DARK_GREY, 2);
+			DrawString(0, int(ScreenHeight() * 4.0f / 5.0f), text.substr(j, i-j), olc::WHITE, 2);
+		}
 		if (GetKey(olc::Key::SPACE).bHeld) i = int(size(text));
 		if ((i == size(text)) || (bTypeTextDone)) {
 			nDisplayTextPlace = int(size(text));
@@ -240,22 +259,25 @@ private:
 	}
 
 	void SplashScreen(float fElapsedTime) {
-		
+		fGlobalTime += fElapsedTime;
 		//std::srand(std::time(nullptr));
 		SetDrawTarget(buffBack);
 		olc::GFX2D::Transform2D t;
-		t.Scale(1.8f, 1.8f);
+		t.Scale(1.8f, 2.2f);
 		t.Translate(-160.0f, 0.0f);
 		olc::GFX2D::DrawSprite(sprSplashScreen, t);
 		//wait for space key to start game
-		DrawString(ScreenWidth() / 20, ScreenHeight() / 3, "ALTAY\n\nTANK GAME", olc::DARK_GREEN, 6);
-		DrawString(ScreenWidth() / 20 - 4, ScreenHeight() / 3 - 4, "ALTAY\n\nTANK GAME", olc::GREEN, 6);
-		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() * 3/ 4, "PRESS SPACE TO START...", olc::BLACK, 3);
-		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() *3/4 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
+		DrawString(ScreenWidth() / 12,			ScreenHeight() / 10,		"ALTAY TANK", olc::DARK_GREY, 10);
+		DrawString(ScreenWidth() / 12 - 4,		ScreenHeight() / 10 - 4,	"ALTAY TANK", olc::GREEN, 10);
+		DrawString(int(ScreenWidth() * 0.25f + sin(fGlobalTime) * 10.0f), int(ScreenHeight() * 0.75f + 4.0f * cos(fGlobalTime)),		"PRESS SPACE TO START...", olc::VERY_DARK_GREY, 3);
+		DrawString(int(ScreenWidth() * 0.25f - 4 + sin(fGlobalTime) * 10.0f), int(ScreenHeight() * 0.75f - 4.0f + 4.0f * cos(fGlobalTime)), "PRESS SPACE TO START...", olc::RED, 3);
 
 		//TYPE STORY TEXT TO SCREEN
 		if (fTextDisplayDuration < 5.0f) TypeStory(sStory, fElapsedTime); //(!bTypeTextDone) || 
-
+		if (fTextDisplayDuration >= 5.0f) {
+			nDisplayTextPlace = 0;
+			nDisplayTextStart = 0;
+		}
 		//Draw to Screen now
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
@@ -957,29 +979,10 @@ public:
 	{
 		// Called once at the start, so create things here
 		// todo: report ALL missing or bad files (if sndXXX == -1)
-		cout << "\n Loading sounds...\n";
 		olc::SOUND::InitialiseAudio();
 		sndSplashScreen = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");
-		sndGameBackground = olc::SOUND::LoadAudioSample("resources\\music\\GameBackground.wav");
-		sndGameOver = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");	//to be replaced with GameOver again?
-		sndGameOverOnce = olc::SOUND::LoadAudioSample("resources\\soundFX\\GameOverOnce.wav"); 
-		sndFireCannon = olc::SOUND::LoadAudioSample("resources\\soundFX\\FireCannon.wav");
-		sndExplode = olc::SOUND::LoadAudioSample("resources\\soundFX\\Explode.wav");
-		sndPowerUp1 = olc::SOUND::LoadAudioSample("resources\\soundFX\\PowerUp1.wav");		//test
-		if (sndPowerUp1 == -1) sndPowerUp1 = sndExplode; //load default sound if PowerUp1.wav is broken!
-		sndAutopilotOn = olc::SOUND::LoadAudioSample("resources\\soundFX\\autopilot.wav");
-		sndAutopilotOff = olc::SOUND::LoadAudioSample("resources\\soundFX\\coin.wav");
-		
-		cout << "\n Loading sprites...\n";
-		sprPlayer = new olc::Sprite("resources\\tank.png");
-		sprTurret = new olc::Sprite("resources\\tank_turret.png");
-		sprBackground = new olc::Sprite("resources\\planet.png");
 		sprSplashScreen = new olc::Sprite("resources\\altay-01.jpg");
-		sprEnemy1 = new olc::Sprite("resources\\enemy.png");
-		sprEnemy2 = new olc::Sprite("resources\\enemy2.png");
-		buffBack = new olc::Sprite(ScreenWidth(), ScreenHeight());
-		sprPowerUp_01 = new olc::Sprite("resources\\powerups\\PowerUp_01.png");
-		cout << "LOADING COMPLETE!\n";
+
 		nGameState = 0;
 		prevGameState = -1;
 		return true;
@@ -989,12 +992,13 @@ public:
 	{
 
 		if (nGameState == 0) {	//SplashScreen
-			if (prevGameState != nGameState) { //run only once
+			if (prevGameState != nGameState) { //runs once upon entry into SplashScreen state
 				olc::SOUND::StopAll();
 				olc::SOUND::PlaySample(sndSplashScreen, true); // Starts to Play the sample in looping mode
 				//ReadGameStoryFromFile();
 				sStory = readStory("GameStory.txt");
-
+				nDisplayTextPlace = 0;
+				nDisplayTextStart = 0;
 				//InitializeGame(); //set all global values to initial values for a fresh game
 				// Read HiScores from file
 				{
@@ -1077,10 +1081,36 @@ public:
 			if (GetKey(olc::Key::ESCAPE).bPressed) nGameState = -1;
 		}
 		else if (nGameState == 1) {				// GAME IS ON
-			if (prevGameState != nGameState) {
+			if (prevGameState != nGameState) { // ENTRY
 				olc::SOUND::StopSample(sndSplashScreen);
 				olc::SOUND::StopSample(sndGameOver);
+				// TODO: READ ALL ASSETS HERE, while writing "LOADING GAME"
+				// TODO : PLAY SOME SHORT SOUND
+				if (!AssetsLoaded) {
+					cout << "\n Loading sounds...\n";
+					sndGameBackground = olc::SOUND::LoadAudioSample("resources\\music\\GameBackground.wav");
+					sndGameOver = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");	//to be replaced with GameOver again?
+					sndGameOverOnce = olc::SOUND::LoadAudioSample("resources\\soundFX\\GameOverOnce.wav");
+					sndFireCannon = olc::SOUND::LoadAudioSample("resources\\soundFX\\FireCannon.wav");
+					sndExplode = olc::SOUND::LoadAudioSample("resources\\soundFX\\Explode.wav");
+					sndPowerUp1 = olc::SOUND::LoadAudioSample("resources\\soundFX\\PowerUp1.wav");		//test
+					if (sndPowerUp1 == -1) sndPowerUp1 = sndExplode; //load default sound if PowerUp1.wav is broken!
+					sndAutopilotOn = olc::SOUND::LoadAudioSample("resources\\soundFX\\autopilot.wav");
+					sndAutopilotOff = olc::SOUND::LoadAudioSample("resources\\soundFX\\coin.wav");
+
+					cout << "\n Loading sprites...\n";
+					sprPlayer = new olc::Sprite("resources\\tank.png");
+					sprTurret = new olc::Sprite("resources\\tank_turret.png");
+					sprBackground = new olc::Sprite("resources\\planet.png");
+					sprEnemy1 = new olc::Sprite("resources\\enemy.png");
+					sprEnemy2 = new olc::Sprite("resources\\enemy2.png");
+					buffBack = new olc::Sprite(ScreenWidth(), ScreenHeight());
+					sprPowerUp_01 = new olc::Sprite("resources\\powerups\\PowerUp_01.png");
+					cout << "LOADING COMPLETE!\n";
+					AssetsLoaded = true;
+				}
 				olc::SOUND::PlaySample(sndGameBackground, true);
+				fGlobalTime = 0.0f;
 			}
 			if (!bGamePaused) PlayGame(fElapsedTime);
 			if (bGamePaused) {
