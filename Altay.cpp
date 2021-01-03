@@ -1,11 +1,14 @@
+
 #include "pch.h"
 #define OLC_PGE_APPLICATION
+
 #include "olcPixelGameEngine.h"
 #include "olcPGEX_Graphics2D.h"
 #include "olcPGEX_Sound.h"
+
 using namespace std;
 
-const double PI = 3.141592653589793238463; // it could as well be 3.142
+const float PI = 3.1415926535f; // it could as well be 3.142
 
 /* 
 ALTAY TANK GAME
@@ -27,7 +30,7 @@ class Altay : public olc::PixelGameEngine
 public:
 	Altay()
 	{
-		sAppName = "ALTAY TANK GAME, v1.5a";
+		sAppName = "ALTAY TANK GAME, v1.5.1";
 	}
 
 private:
@@ -40,6 +43,7 @@ private:
 	int nGameState;		//splash screen,  game, endGame
 	int prevGameState;
 	int nDisplayTextPlace;
+	float fTextDisplayDuration = 0.0f;
 	bool bTypeTextDone;
 	bool bGamePaused = false;
 	int nLevel;
@@ -181,17 +185,16 @@ private:
 			nDisplayTextPlace++;
 			i = nDisplayTextPlace;
 		}
-		if (i < size(text)) {
+		//if (i < size(text)) {
 			DrawString(0 + 2, 5 + 1, text.substr(0, i), olc::BLACK, 1);
 			DrawString(0, 5, text.substr(0, i), olc::WHITE, 1);
-		}
-		if (GetKey(olc::Key::SPACE).bHeld) i==size(text);
-		if (i == size(text)) {
-			nDisplayTextPlace = 0;
-			//TODO add a wait counter for 3 seconds before killing the Story sequence
+		//}
+		if (GetKey(olc::Key::SPACE).bHeld) i = int(size(text));
+		if ((i == size(text)) || (bTypeTextDone)) {
+			nDisplayTextPlace = int(size(text));
+			fTextDisplayDuration += fElapsedTime;
 			bTypeTextDone = true;
 		}
-		
 	}
 	
 	void setTargetWP(int WPID) {
@@ -233,7 +236,7 @@ private:
 
 
 	float distance(const float x1, const float y1, const float x2, const float y2) {
-		return pow((x2 - x1), 2) + pow((y2 - y1), 2);
+		return (x2 - x1) * (x2-x1) + (y2 - y1) * (y2 - y1);
 	}
 
 	void SplashScreen(float fElapsedTime) {
@@ -241,7 +244,7 @@ private:
 		//std::srand(std::time(nullptr));
 		SetDrawTarget(buffBack);
 		olc::GFX2D::Transform2D t;
-		t.Scale(1.8, 1.8);
+		t.Scale(1.8f, 1.8f);
 		t.Translate(-160.0f, 0.0f);
 		olc::GFX2D::DrawSprite(sprSplashScreen, t);
 		//wait for space key to start game
@@ -251,7 +254,7 @@ private:
 		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() *3/4 - 4, "PRESS SPACE TO START...", olc::WHITE, 3);
 
 		//TYPE STORY TEXT TO SCREEN
-		if (!bTypeTextDone) TypeStory(sStory, fElapsedTime);
+		if (fTextDisplayDuration < 5.0f) TypeStory(sStory, fElapsedTime); //(!bTypeTextDone) || 
 
 		//Draw to Screen now
 		SetDrawTarget(nullptr);
@@ -267,8 +270,8 @@ private:
 		//sWP targetWP = tempWP;
 
 		//update Player
-		float dx = (float)nMouseX - Player.px;
-		float dy = (float)nMouseY - Player.py;
+		float dx = (float)nMouseX - Player.px + fWorldX;
+		float dy = (float)nMouseY - Player.py + fWorldY;
 		fHeading = atan2(dy, dx);
 		fBearingNext = atan2(Player.vy, Player.vx) - PI; //
 		
@@ -355,8 +358,8 @@ private:
 			Player.vy = (targetWP.y - Player.py);
 		}
 		
-		Player.vx = 0.99 * Player.vx;
-		Player.vy = 0.99 * Player.vy;
+		Player.vx = 0.99f * Player.vx;
+		Player.vy = 0.99f * Player.vy;
 
 		Player.vx = min(Player.vx, maxSpeed);
 		Player.vx = max(Player.vx, -maxSpeed);
@@ -380,8 +383,8 @@ private:
 			nLevel++;
 			Player.health += 100;
 			Player.health = min(Player.health, (float)1000);
-			maxSpeed = maxSpeed * 1.025;
-			Player.speed = Player.speed * 1.025;
+			maxSpeed = maxSpeed * 1.025f;
+			Player.speed = Player.speed * 1.025f;
 		}
 
 		if (listEnemies.size() < (0.3 * nLevel +3) ) {
@@ -401,22 +404,22 @@ private:
 				e.py = Player.py;
 
 				while (( distance(Player.px, Player.py, e.px, e.py)) < 20000) {
-					e.px = std::rand() / (RAND_MAX / ScreenWidth());
-					e.py = std::rand() / (RAND_MAX / ScreenHeight());
+					e.px = float(std::rand() / (RAND_MAX / ScreenWidth()));
+					e.py = float(std::rand() / (RAND_MAX / ScreenHeight()));
 				}
 				e.sprEnemy = sprEnemy1;
-				e.vx = 10 * (std::rand() % 20 - 10);
-				e.vy = 10 * (std::rand() % 20 - 10);
+				e.vx = 10.0f * (std::rand() % 20 - 10);
+				e.vy = 10.0f * (std::rand() % 20 - 10);
 				e.health = 150;		//full health
 				float dxE = (float)e.px - Player.px;	// enemy should face Player
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
-				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
-				e.firePower = 0.5 * (nLevel > 2) ? 10 : 0.0f;
-				e.fireRate = 1.2;
+				e.hdg = fEnemyHeading + float((std::rand() / RAND_MAX - 0.5f)*0.3145f);
+				e.firePower = 0.5 * (nLevel > 2) ? 10.0f : 0.0f;
+				e.fireRate = 1.2f;
 				e.fireRateAcc = 0.0f;
-				e.fireSpeed = 2;
-				e.speedMax = 20 + (nLevel*1.25);
+				e.fireSpeed = 2.0f;
+				e.speedMax = 20.0f + (nLevel*1.25f);
 				listEnemies.push_back(e);
 			}
 			else if (dicer == 1) {
@@ -425,29 +428,29 @@ private:
 				e.py = Player.py;
 								
 				while (distance(Player.px, Player.py, e.px, e.py) < 20000) {
-					e.px = std::rand() / (RAND_MAX / ScreenWidth());
-					e.py = std::rand() / (RAND_MAX / ScreenHeight());
+					e.px = float(std::rand() / (RAND_MAX / ScreenWidth()));
+					e.py = float(std::rand() / (RAND_MAX / ScreenHeight()));
 				}
 				e.sprEnemy = sprEnemy2;
-				e.vx = 10 * (std::rand() % 20 - 10);
-				e.vy = 10 * (std::rand() % 20 - 10);
+				e.vx = 10.0f * (std::rand() % 20 - 10);
+				e.vy = 10.0f * (std::rand() % 20 - 10);
 				e.health = 40;		//full health
 				float dxE = (float)e.px - Player.px;
 				float dyE = (float)e.py - Player.py;
 				float fEnemyHeading = atan2(dyE, dxE) - 1.5708f;	//rotate 90 deg to match with image
-				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5)*0.3145;
+				e.hdg = fEnemyHeading + (std::rand() / RAND_MAX - 0.5f)*0.3145f;
 				e.firePower = 0.5*(nLevel > 2) ? 10 : 0.0f;
-				e.fireRate = 1.5;
+				e.fireRate = 1.5f;
 				e.fireRateAcc = 0.0f;
-				e.fireSpeed = 2;
-				e.speedMax = 10 + (nLevel*1.25);
+				e.fireSpeed = 2.0f;
+				e.speedMax = 10.0f + (nLevel*1.25f);
 				listEnemies.push_back(e);
 			}
 			else if (abs(dicer-10) < 1 ) {
 				sPowerup pu;
-				pu.sprPowerUp = sprPowerUp_01; //new olc::Sprite("resources\\powerups\\PowerUp_01.png");
-				pu.px = (std::rand() / (RAND_MAX / ScreenWidth() * 1)); //+ScreenWidth();
-				pu.py = (std::rand() / (RAND_MAX / ScreenHeight() * 1)); //+ScreenHeight();
+				pu.sprPowerUp = sprPowerUp_01;
+				pu.px = float(std::rand() / (RAND_MAX / ScreenWidth())); //+ScreenWidth();
+				pu.py = float(std::rand() / (RAND_MAX / ScreenHeight())); //+ScreenHeight();
 				pu.vx = 0.0f;  //10 * (std::rand() % 20 - 10);
 				pu.vy = 0.0f;  //10 * (std::rand() % 20 - 10);
 				pu.fBulletHitPoint = 0;
@@ -490,7 +493,7 @@ private:
 					b.vy = dy * d * 400.0f;
 					b.hitPoint = 20;
 					b.speed = 10 + FireSpeed;
-					b.speedFactor = 0.66;
+					b.speedFactor = 0.66f;
 					b.hasExploded = false;
 					b.bEnemyFire = false;
 					listBullets.push_back(b);
@@ -514,7 +517,7 @@ private:
 					b.vy = dy * d * 400.0f;
 					b.hitPoint = 30;
 					b.speed = 10 + FireSpeed;
-					b.speedFactor = 0.66;
+					b.speedFactor = 0.66f;
 					b.hasExploded = false;
 					b.bEnemyFire = false;
 					listBullets.push_back(b);
@@ -542,7 +545,7 @@ private:
 					b.vy = dy * d * 400.0f;
 					b.hitPoint = 20;
 					b.speed = 10 + FireSpeed;
-					b.speedFactor = 0.66;
+					b.speedFactor = 0.66f;
 					b.hasExploded = false;
 					b.bEnemyFire = false;
 					listBullets.push_back(b);
@@ -553,7 +556,7 @@ private:
 		}
 		
 		if (GetMouse(1).bHeld) { //right click
-			updateWP(targetWPid, nMouseX, nMouseY); //update target WP
+			updateWP(targetWPid, float(nMouseX), float(nMouseY)); //update target WP
 			//todo: add some sound and visual FX to inform the Player!
 		}
 		
@@ -566,13 +569,13 @@ private:
 			{
 				if (!b.bEnemyFire && (distance(o.px, o.py, b.px, b.py) < 1600))	//check enemies vs playerbullets
 				{
-					o.health = o.health - b.hitPoint;
+					o.health = int(o.health - b.hitPoint);
 					if (o.health <= 0) {	//enemy is killed
-						gameScore += (1000 + o.firePower * 10);	// was 1000
+						gameScore += int(1000.0f + o.firePower * 10.0f);	// was 1000
 					}
-					o.fireRate = o.fireRate * 1.2;
-					o.px -= o.vx*10.0*fElapsedTime;	//go back a bit
-					o.py -= o.vy*10.0*fElapsedTime;
+					o.fireRate = o.fireRate * 1.2f;
+					o.px -= o.vx*10.0f*fElapsedTime;	//go back a bit
+					o.py -= o.vy*10.0f*fElapsedTime;
 					o.vx = o.vx * b.speedFactor;
 					o.vy = o.vy * b.speedFactor;
 					
@@ -613,31 +616,23 @@ private:
 			x.currentSize += 2.5;
 			for (auto &e : listEnemies)
 			{
+				float temp_dist = distance(e.px, e.py, x.px, x.py);
 				// add collateral damage code here
-				if (distance(e.px,e.py,x.px,x.py) < 20000) {
-					int CollateralDamage = std::rand() % 10;
+				if ((temp_dist >1000.0f) & ( temp_dist < 10000.0f)) {
+					int CollateralDamage = std::rand() % 3;
 					e.health = e.health - 10 * CollateralDamage;		// collateral damage
 					if (e.health <= 0) {	//enemy is killed
 						//gameScore += e.firePower * 10;	// was 1000
-						gameScore += (1000 + e.firePower * 10);	// was 1000
+						gameScore += int(1000.0f + e.firePower * 10.0f);	// was 1000
 					}
-					e.fireRate = e.fireRate * 1.2;
-					e.px -= e.vx*10.0*fElapsedTime;	//go back a bit
-					e.py -= e.vy*10.0*fElapsedTime;
-					e.vx = e.vx * 0.95;		//slow it down a bit
-					e.vy = e.vy * 0.95;
+					e.fireRate = e.fireRate * 1.2f;
+					e.px -= e.vx*10.0f*fElapsedTime;	//go back a bit
+					e.py -= e.vy*10.0f*fElapsedTime;
+					e.vx = e.vx * 0.95f;		//slow it down a bit
+					e.vy = e.vy * 0.95f;
 
 					olc::SOUND::PlaySample(sndExplode);
-					/*sBullet b;
-					b.px = e.px;
-					b.py = e.py;
-					b.hitPoint = CollateralDamage;
-					b.vx = std::rand() % 100 - 50;
-					b.vy = std::rand() % 100 - 50;
-					b.hasExploded = false;
-					b.bEnemyFire = false;
-					b.speed = 0.0f;
-					listBullets.push_back(b);*/
+
 				}
 			}
 		}
@@ -663,23 +658,24 @@ private:
 			}
 			e.hdg = atan2((Player.py - e.py), (Player.px - e.px)) + 1.5708f;		//todo: implement quickest turn
 			//e.hdg += 1.5708f;
-			e.vx = (0.5 * (Player.px - 20 * cos(e.hdg - 1.5708f) - e.px));		//stand at an offset
-			e.vy = (0.5 * (Player.py - 20 * sin(e.hdg - 1.5708f) - e.py));		//stand at an offset
+			e.vx = (0.5f * (Player.px - 20.0f * cos(e.hdg - 1.5708f) - e.px));		//stand at an offset
+			e.vy = (0.5f * (Player.py - 20.0f * sin(e.hdg - 1.5708f) - e.py));		//stand at an offset
 			e.vx = Saturate(e.vx, -e.speedMax, +e.speedMax);
 			e.vy = Saturate(e.vy, -e.speedMax, +e.speedMax);
 			e.fireRateAcc += fElapsedTime;
 			if (e.fireRateAcc > e.fireRate) {
-				//generate a bullet from the Enemy, directed at its heading.
+				//generate a bullet from the Enemy, directed at its heading with some randomness
 				sBullet b;
-				b.px = e.px + 80 * cos(e.hdg - 1.5708f);
-				b.py = e.py + 80 * sin(e.hdg - 1.5708f);
+				float rndOffset = (std::rand() % 100) / 1000.0f - 0.05f;  // (-0.5, +0.5)
+				b.px = e.px + 80 * cos(e.hdg + rndOffset - 1.5708f);
+				b.py = e.py + 80 * sin(e.hdg + rndOffset - 1.5708f);
 				b.hitPoint = e.firePower;
-				b.vx = 20 * e.firePower * cos(e.hdg - 1.5708f);
-				b.vy = 20 * e.firePower * sin(e.hdg - 1.5708f);
+				b.vx = 20 * e.firePower * cos(e.hdg + rndOffset - 1.5708f);
+				b.vy = 20 * e.firePower * sin(e.hdg + rndOffset - 1.5708f);
 				b.hasExploded = false;
 				b.bEnemyFire = true;
 				b.speed = e.fireSpeed;
-				b.speedFactor = 0.95;
+				b.speedFactor = 0.95f;
 				listBullets.push_back(b);
 				e.fireRateAcc = 0.0f;	//reload
 			}
@@ -711,7 +707,7 @@ private:
 				pu.timer = pu.timeout;
 				fFireRate = pu.fPlayerFireRate * fFireRate;
 				FireSpeed = 10;
-				gameScore += pu.fScore;
+				gameScore += int(pu.fScore);
 				sActivePowerup apu;
 				apu.timer = 0.0f;
 				apu.timeout = 10.0f + fTimePowerUp;
@@ -727,7 +723,7 @@ private:
 			apu.timer += fElapsedTime;
 			if (apu.timer >= apu.timeout) {
 				//todo: stop the effects of this powerup
-				fFireRate = fFireRate / 0.85;
+				fFireRate = fFireRate / 0.85f;
 			}
 			else {
 			}
@@ -737,19 +733,24 @@ private:
 SetDrawTarget(buffBack);
 //fWorldX = 0.0f;		//200 * cos(fGlobalTime * 2);
 //fWorldY = 0.0f;		//400 * sin(fGlobalTime * 2);
-DrawPartialSprite(0, 0, sprBackground, 300 + fWorldX, 200 + fWorldY, ScreenWidth(), ScreenHeight());	//move the background if the player approaches the sides (until size of image of course!)
+DrawPartialSprite(0, 0, sprBackground, int(300 + fWorldX), int(200 + fWorldY), ScreenWidth(), ScreenHeight());	//move the background if the player approaches the sides (until size of image of course!)
 fGlobalTime += fElapsedTime;
 
 //draw Patrol Path
 {
 	for (auto &WP : listPath)
 	{
-		FillCircle(WP.x, WP.y, 6, olc::CYAN);
-		FillRect(WP.x, WP.y, 3 * WP.id, 2, olc::BLUE);
+		FillCircle(int(WP.x - fWorldX), int(WP.y -fWorldY), 6, olc::CYAN);
+		FillRect(int(WP.x - fWorldX), int(WP.y - fWorldY), int(3 * WP.id), 2, olc::BLUE);
 	}
 }
-//draw TANK
+//draw TANK // draw Player
 {
+	// adjust world offset (camera view) wrt player
+	if ((Player.px - fWorldX) < 100) fWorldX -= 50 * fElapsedTime;
+	else if ((Player.px - fWorldX) > ScreenWidth() - 100) fWorldX +=  50 * fElapsedTime;
+	if ((Player.py - fWorldY) < 100) fWorldY -=  50 * fElapsedTime;
+	else if ((Player.py - fWorldY) > ScreenHeight() - 100) fWorldY +=  50 * fElapsedTime;
 	olc::GFX2D::Transform2D t;
 	//t.Translate(-70.0f, -120.0f);
 	t.Translate(-100, -50); //dene yanýl.
@@ -760,15 +761,16 @@ fGlobalTime += fElapsedTime;
 	olc::GFX2D::DrawSprite(sprPlayer, t);
 	//SetPixelMode(olc::Pixel::NORMAL);
 
+
 	//Draw Turret
-	olc::GFX2D::Transform2D tCannon;
-	tCannon.Translate(-85 + tunerX, -50 + tunerY);
+	olc::GFX2D::Transform2D tTurret;
+	tTurret.Translate(-85 + tunerX, -50 + tunerY);
 	// cout << "x:" << tunerX << " | y: " << tunerY << endl;
-	tCannon.Scale(0.4f, 0.4f);		// was 0.4 todo: maybe animate when firing bullets?
-	tCannon.Rotate(fHeading);
-	tCannon.Translate(Player.px - fWorldX, Player.py - fWorldY);		// -fWorldX, -fWorldY
+	tTurret.Scale(0.4f, 0.4f);		// was 0.4 todo: maybe animate when firing bullets?
+	tTurret.Rotate(fHeading);
+	tTurret.Translate(Player.px - fWorldX, Player.py - fWorldY);		// -fWorldX, -fWorldY
 	/*SetPixelMode(olc::Pixel::MASK);*/
-	olc::GFX2D::DrawSprite(sprTurret, tCannon);
+	olc::GFX2D::DrawSprite(sprTurret, tTurret);
 	SetPixelMode(olc::Pixel::NORMAL);
 }
 //draw enemies
@@ -779,12 +781,12 @@ fGlobalTime += fElapsedTime;
 		olc::GFX2D::Transform2D tE;
 		tE.Translate(-70.0f, -120.0f);
 		tE.Rotate(e.hdg);
-		tE.Scale(0.30, 0.30);		//was 0.4
+		tE.Scale(0.30f, 0.30f);		//was 0.4
 		tE.Translate(e.px - fWorldX, e.py - fWorldY);
 
 		olc::GFX2D::DrawSprite(e.sprEnemy, tE);
-		DrawRect(e.px - 20, e.py - 20, 40, 5, olc::BLACK);
-		FillRect(e.px - 20, e.py - 20, int(e.health) / 4 - 1, 4, olc::GREY);
+		DrawRect(int(e.px - fWorldX - 20.0f), int(e.py - fWorldY - 20.0f), 40, 5, olc::BLACK);
+		FillRect(int(e.px - fWorldX - 20.0f), int(e.py - fWorldY - 20.0f), int(e.health / 4 - 1.0f), 4, olc::GREY);
 
 	}
 	SetPixelMode(olc::Pixel::NORMAL);
@@ -797,7 +799,7 @@ fGlobalTime += fElapsedTime;
 		olc::GFX2D::Transform2D tE;
 		tE.Translate(-120.0f, -140.0f);
 		//tE.Rotate(e.hdg);
-		tE.Scale(0.2, 0.2);
+		tE.Scale(0.2f, 0.2f);
 		tE.Translate(pu.px - fWorldX, pu.py - fWorldY);
 		olc::GFX2D::DrawSprite(pu.sprPowerUp, tE);
 	}
@@ -813,7 +815,7 @@ fGlobalTime += fElapsedTime;
 
 	if (RemainingPowerUp > 0) {
 		SetPixelMode(olc::Pixel::MASK);
-		FillRect(20, 55, RemainingPowerUp * 4, 16, olc::BLUE);
+		FillRect(20, 55, int(RemainingPowerUp * 4.0f), 16, olc::BLUE);
 		//DrawString(20, 60, "PU", olc::WHITE);
 		SetPixelMode(olc::Pixel::NORMAL);
 		fTimePowerUp = RemainingPowerUp;
@@ -824,21 +826,21 @@ fGlobalTime += fElapsedTime;
 {
 	for (auto &b : listBullets)
 	{
-		FillCircle(b.px - fWorldX, b.py + 6 - fWorldY, b.hitPoint / 4 - 1, olc::BLACK);		//cast some shadow
-		FillCircle(b.px - fWorldX, b.py - fWorldY, b.hitPoint / 4, olc::DARK_RED);
+		FillCircle(int(b.px - fWorldX), int(b.py + 6 - fWorldY), int(b.hitPoint / 4.0f - 1), olc::BLACK);		//cast some shadow
+		FillCircle(int(b.px - fWorldX), int(b.py - fWorldY), int(b.hitPoint / 4.0f), olc::DARK_RED);
 	}
 }
 //draw Explosions
 {
 	for (auto &x : listExplosions) {
-		FillCircle(x.px - fWorldX, x.py - fWorldY, x.currentSize, olc::DARK_RED);
-		DrawCircle(x.px - fWorldX, x.py - fWorldY, x.currentSize, olc::RED);
+		FillCircle(int(x.px - fWorldX), int(x.py - fWorldY), int(x.currentSize), olc::DARK_RED);
+		DrawCircle(int(x.px - fWorldX), int(x.py - fWorldY), int(x.currentSize), olc::RED);
 	}
 }
 // Draw cross hair
 {
 	olc::Pixel crosshaircolor = olc::WHITE;
-	if (distance(nMouseX, nMouseY, Player.px, Player.py) < 40000) {
+	if (float(distance(float(nMouseX), float(nMouseY), Player.px, Player.py)) < 40000.0f) {
 		crosshaircolor = olc::WHITE;
 		DrawCircle(nMouseX, nMouseY, 7, crosshaircolor);
 	}
@@ -874,16 +876,16 @@ fGlobalTime += fElapsedTime;
 			DrawString(ScreenWidth() - 60, 11, to_string(nLevel), olc::DARK_CYAN, 2);
 			DrawString(ScreenWidth() - 59, 10, to_string(nLevel), olc::CYAN, 2);
 			int HealthBarLength = 100;
-			float dHealth = 1000 / HealthBarLength;
+			float dHealth = 1000.0f / HealthBarLength;
 			DrawRect(ScreenWidth() / 2 - HealthBarLength / 2, HealthBarLength / 5, HealthBarLength, HealthBarLength / 5, olc::BLACK);
 			
 			if (Player.health < 200) FillRect(ScreenWidth() / 2 - HealthBarLength / 2 + 1, 21, int(Player.health / dHealth) - 1, 19, olc::RED);
 			else FillRect(ScreenWidth() / 2 - HealthBarLength / 2 + 1, 21, int(Player.health / dHealth) - 1, 19, olc::GREEN);
 			
-			DrawRect(Player.px - HealthBarLength / 8, Player.py -40, HealthBarLength / 4, HealthBarLength / 20, olc::BLACK);
-			FillRect(Player.px - HealthBarLength / 8, Player.py -40, int(Player.health / dHealth)/4 - 1, HealthBarLength / 20, olc::GREEN);
+			DrawRect(int(Player.px - fWorldX - HealthBarLength / 8.0f), int(Player.py - fWorldY - 40.0f), int(HealthBarLength / 4.0f), int(HealthBarLength / 20.0f), olc::BLACK);
+			FillRect(int(Player.px - fWorldX - HealthBarLength / 8.0f), int(Player.py - fWorldY - 40.0f), int(Player.health / dHealth /4.0f - 1.0f), int(HealthBarLength / 20.0f), olc::GREEN);
 
-			FillRect(20, 80, fCannonTemperature*8, 16, (fCannonTemperature<4)? olc::BLUE : (fCannonTemperature<5) ? olc::DARK_RED : olc::RED );
+			FillRect(20, 80, int(fCannonTemperature*4.0f), 16, (fCannonTemperature<4)? olc::BLUE : (fCannonTemperature<5) ? olc::DARK_RED : olc::RED );
 
 			//Draw to Screen now
 			SetDrawTarget(nullptr);
@@ -912,7 +914,7 @@ fGlobalTime += fElapsedTime;
 		SetDrawTarget(buffBack);
 		FillRect(0, 0, ScreenWidth(), ScreenHeight(), olc::DARK_RED);
 		olc::GFX2D::Transform2D t;
-		t.Scale(1.8, 1.8);
+		t.Scale(1.8f, 1.8f);
 		t.Translate(-160.0f, 0.0f);
 		olc::GFX2D::DrawSprite(sprSplashScreen, t);
 		//DrawSprite(0, 0, sprSplashScreen);
@@ -931,17 +933,17 @@ fGlobalTime += fElapsedTime;
 
 			float animate = 15*(sin(3*fGlobalTime)+cos(2*fGlobalTime));
 			fGlobalTime += fElapsedTime;
-			DrawString(ScreenWidth() / 2 - 150, ScreenHeight() / 2 + 75 + animate, "NEW HI SCORE!!!", olc::BLACK, 3);
-			DrawString(ScreenWidth() / 2 - 150 - 4, ScreenHeight() / 2 + 71 + animate, "NEW HI SCORE!!!", olc::CYAN, 3);
+			DrawString(int(ScreenWidth() / 2.0f) - 150, int(ScreenHeight() / 2.0f + 75.0f + animate), "NEW HI SCORE!!!", olc::BLACK, 3);
+			DrawString(int(ScreenWidth() / 2.0f) - 154, int(ScreenHeight() / 2.0f + 71.0f + animate), "NEW HI SCORE!!!", olc::CYAN, 3);
 
 		}
 		//wait for space key to start game
 		
-		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 2 + 150, "PRESS SPACE TO START AGAIN.", olc::BLACK, 2);
-		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 2 + 146, "PRESS SPACE TO START AGAIN.", olc::WHITE, 2);
-		//Draw to Screen now
-		DrawString(ScreenWidth() / 2 - 250, ScreenHeight() / 3 + 150, "PRESS ESC TO QUIT.", olc::BLACK, 2);
-		DrawString(ScreenWidth() / 2 - 250 - 4, ScreenHeight() / 3 + 146, "PRESS ESC TO QUIT.", olc::WHITE, 2);
+		DrawString(int(ScreenWidth() / 2.0f) - 250, int(ScreenHeight() / 2.0f) + 150, "PRESS SPACE TO START AGAIN.", olc::BLACK, 2);
+		DrawString(int(ScreenWidth() / 2.0f) - 254, int(ScreenHeight() / 2.0f) + 146, "PRESS SPACE TO START AGAIN.", olc::WHITE, 2);
+		
+		DrawString(int(ScreenWidth() / 2.0f) - 250, int(ScreenHeight() * 2.0f / 3.0f) + 150, "PRESS ESC TO QUIT.", olc::BLACK, 2);
+		DrawString(int(ScreenWidth() / 2.0f) - 254, int(ScreenHeight() * 2.0f / 3.0f) + 146, "PRESS ESC TO QUIT.", olc::WHITE, 2);
 
 		SetDrawTarget(nullptr);
 		DrawSprite(0, 0, buffBack);
@@ -976,6 +978,7 @@ public:
 		sprEnemy1 = new olc::Sprite("resources\\enemy.png");
 		sprEnemy2 = new olc::Sprite("resources\\enemy2.png");
 		buffBack = new olc::Sprite(ScreenWidth(), ScreenHeight());
+		sprPowerUp_01 = new olc::Sprite("resources\\powerups\\PowerUp_01.png");
 		cout << "LOADING COMPLETE!\n";
 		nGameState = 0;
 		prevGameState = -1;
@@ -1025,12 +1028,12 @@ public:
 
 				// SET Waypoints for the auto-patrol PATH
 
-				int WPX[4];
-				int WPY[4];
-				WPX[0] = 100;					WPY[0] = 100;
-				WPX[1] = 100;					WPY[1] = ScreenHeight() - 100;
-				WPX[2] = ScreenWidth() - 100;	WPY[2] = ScreenHeight() - 100;
-				WPX[3] = ScreenWidth() - 100;	WPY[3] = 100;
+				float WPX[4];
+				float WPY[4];
+				WPX[0] = 100.0f;					WPY[0] = 100.0f;
+				WPX[1] = 100.0f;					WPY[1] = ScreenHeight() - 100.0f;
+				WPX[2] = ScreenWidth() - 100.0f;	WPY[2] = ScreenHeight() - 100.0f;
+				WPX[3] = ScreenWidth() - 100.0f;	WPY[3] = 100.0f;
 				listPath.clear();
 				for (int i = 0; i < 4; i++) {
 					tempWP.id = i + 1;
@@ -1040,10 +1043,10 @@ public:
 				}
 				// waypoints are stored in list listPath.
 
-				Player.px = ScreenWidth() / 2;
-				Player.py = ScreenHeight() / 2;
-				Player.vx = 0;
-				Player.vy = 0;
+				Player.px = ScreenWidth() / 2.0f;
+				Player.py = ScreenHeight() / 2.0f;
+				Player.vx = 0.0f;
+				Player.vy = 0.0f;
 				Player.health = 1000.0f;
 				fFireRate = 0.25f;
 				fFireRateAcc = 0.0f;
@@ -1132,7 +1135,7 @@ int main()
 	}
 
 	Altay game;
-	if (game.Construct(800, 600, 1, 1, bFullScreen))
+	if (game.Construct(1000, 800, 1, 1, bFullScreen)) //800 x 600
 		game.Start();
 
 	return 0;
