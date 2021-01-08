@@ -1,7 +1,6 @@
 # AltayTankGame
-## Download link: https://epicos.itch.io/altay-tank-game
-
-Gameplay link: https://www.youtube.com/watch?v=9LFq-MUA6D4
+### Download link: https://epicos.itch.io/altay-tank-game
+### Gameplay link: https://www.youtube.com/watch?v=9LFq-MUA6D4
 
 ## LICENCES
 
