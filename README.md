@@ -18,6 +18,8 @@ Altay Tank Game web page is on: http://epicos.itch.io
 
 Important: This set of C++ source codes may require Visual Studio 2015+ to build and debug.
 
+SEE devlog.txt for LINUX related latest updates.
+
 --- GAME STORY ---
 
 Year 2144...
