@@ -204,7 +204,7 @@ private:
 		}
 		//char newLine = '\n';
 		if (i <= text.size()) {
-			cout << j << " - " << i << endl;	
+			//cout << j << " - " << i << endl;	
 			DrawString(0 + 2, int(ScreenHeight() * 4.0f / 5.0f + 2.0f), text.substr(j, i-j), olc::DARK_GREY, 2);
 			DrawString(0, int(ScreenHeight() * 4.0f / 5.0f), text.substr(j, i-j), olc::WHITE, 2);
 		}
