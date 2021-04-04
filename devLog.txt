@@ -1,0 +1,5 @@
+Build command @ Terminal for Linux
+
+g++ -o AltayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17
+
+for Windows, check Javidx9's videos (use Visual Studio 2019 Community Edition)
