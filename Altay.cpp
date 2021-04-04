@@ -12,7 +12,7 @@ const float PI = 3.1415926535f; // it could as well be 3.142
 
 /* 
 ALTAY TANK GAME
-G.Çetin, 2018-2020
+G.ï¿½etin, 2018-2020
 
 See https://github.com/gurkanctn/AltayTankGame for issues, pull request and other info.
 
@@ -775,7 +775,7 @@ fGlobalTime += fElapsedTime;
 	else if ((Player.py - fWorldY) > ScreenHeight() - 100) fWorldY +=  50 * fElapsedTime;
 	olc::GFX2D::Transform2D t;
 	//t.Translate(-70.0f, -120.0f);
-	t.Translate(-100, -50); //dene yanýl.
+	t.Translate(-100, -50); //dene yanï¿½l.
 	t.Scale(0.4f, 0.4f);
 	t.Rotate(fBearing);
 	t.Translate(Player.px - fWorldX, Player.py - fWorldY);		// -fWorldX, -fWorldY
@@ -943,7 +943,8 @@ fGlobalTime += fElapsedTime;
 		DrawString(ScreenWidth() / 2 - 200, ScreenHeight() / 2 - 200, "GAME OVER!", olc::BLACK, 5);
 		DrawString(ScreenWidth() / 2 - 200 - 4, ScreenHeight() / 2 - 204, "GAME OVER!", olc::RED, 5);
 		char scoreText[20];
-		sprintf_s(scoreText, "SCORE: %d", gameScore);
+		//sprintf_s(scoreText, "SCORE: %d", gameScore);
+		snprintf(scoreText, 20, "SCORE: %d", gameScore); // Linux compatibility, seems to work :) 4.4.2021
 		DrawString(ScreenWidth() / 2 - 150, ScreenHeight() / 2 , scoreText, olc::BLACK, 3);
 		DrawString(ScreenWidth() / 2 - 150 - 4, ScreenHeight() / 2 - 4, scoreText, olc::WHITE, 3);
 
@@ -980,8 +981,8 @@ public:
 		// Called once at the start, so create things here
 		// todo: report ALL missing or bad files (if sndXXX == -1)
 		olc::SOUND::InitialiseAudio();
-		sndSplashScreen = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");
-		sprSplashScreen = new olc::Sprite("resources\\altay-01.jpg");
+		sndSplashScreen = olc::SOUND::LoadAudioSample("./Resources/music/SplashScreen.wav");
+		sprSplashScreen = new olc::Sprite("./Resources/altay-01.jpg");
 
 		nGameState = 0;
 		prevGameState = -1;
@@ -1088,24 +1089,24 @@ public:
 				// TODO : PLAY SOME SHORT SOUND
 				if (!AssetsLoaded) {
 					cout << "\n Loading sounds...\n";
-					sndGameBackground = olc::SOUND::LoadAudioSample("resources\\music\\GameBackground.wav");
-					sndGameOver = olc::SOUND::LoadAudioSample("resources\\music\\SplashScreen.wav");	//to be replaced with GameOver again?
-					sndGameOverOnce = olc::SOUND::LoadAudioSample("resources\\soundFX\\GameOverOnce.wav");
-					sndFireCannon = olc::SOUND::LoadAudioSample("resources\\soundFX\\FireCannon.wav");
-					sndExplode = olc::SOUND::LoadAudioSample("resources\\soundFX\\Explode.wav");
-					sndPowerUp1 = olc::SOUND::LoadAudioSample("resources\\soundFX\\PowerUp1.wav");		//test
+					sndGameBackground = olc::SOUND::LoadAudioSample("Resources\\music\\GameBackground.wav");
+					sndGameOver = olc::SOUND::LoadAudioSample("Resources\\music\\SplashScreen.wav");	//to be replaced with GameOver again?
+					sndGameOverOnce = olc::SOUND::LoadAudioSample("Resources\\soundFX\\GameOverOnce.wav");
+					sndFireCannon = olc::SOUND::LoadAudioSample("Resources\\soundFX\\FireCannon.wav");
+					sndExplode = olc::SOUND::LoadAudioSample("Resources\\soundFX\\Explode.wav");
+					sndPowerUp1 = olc::SOUND::LoadAudioSample("Resources\\soundFX\\PowerUp1.wav");		//test
 					if (sndPowerUp1 == -1) sndPowerUp1 = sndExplode; //load default sound if PowerUp1.wav is broken!
-					sndAutopilotOn = olc::SOUND::LoadAudioSample("resources\\soundFX\\autopilot.wav");
-					sndAutopilotOff = olc::SOUND::LoadAudioSample("resources\\soundFX\\coin.wav");
+					sndAutopilotOn = olc::SOUND::LoadAudioSample("Resources\\soundFX\\autopilot.wav");
+					sndAutopilotOff = olc::SOUND::LoadAudioSample("Resources\\soundFX\\coin.wav");
 
 					cout << "\n Loading sprites...\n";
-					sprPlayer = new olc::Sprite("resources\\tank.png");
-					sprTurret = new olc::Sprite("resources\\tank_turret.png");
-					sprBackground = new olc::Sprite("resources\\planet.png");
-					sprEnemy1 = new olc::Sprite("resources\\enemy.png");
-					sprEnemy2 = new olc::Sprite("resources\\enemy2.png");
+					sprPlayer = new olc::Sprite("Resources\\tank.png");
+					sprTurret = new olc::Sprite("Resources\\tank_turret.png");
+					sprBackground = new olc::Sprite("Resources\\planet.png");
+					sprEnemy1 = new olc::Sprite("Resources\\enemy.png");
+					sprEnemy2 = new olc::Sprite("Resources\\enemy2.png");
 					buffBack = new olc::Sprite(ScreenWidth(), ScreenHeight());
-					sprPowerUp_01 = new olc::Sprite("resources\\powerups\\PowerUp_01.png");
+					sprPowerUp_01 = new olc::Sprite("Resources\\powerups\\PowerUp_01.png");
 					cout << "LOADING COMPLETE!\n";
 					AssetsLoaded = true;
 				}
