@@ -1091,13 +1091,13 @@ public:
 					cout << "\n Loading sounds...\n";
 					sndGameBackground = olc::SOUND::LoadAudioSample("Resources/music/GameBackground.wav");
 					sndGameOver = olc::SOUND::LoadAudioSample("Resources/music/SplashScreen.wav");	//to be replaced with GameOver again?
-					sndGameOverOnce = olc::SOUND::LoadAudioSample("Resources\\soundFX\\GameOverOnce.wav");
+					sndGameOverOnce = olc::SOUND::LoadAudioSample("Resources/soundFX/GameOverOnce.wav");
 					sndFireCannon = olc::SOUND::LoadAudioSample("Resources/soundFX/FireCannon.wav");
-					sndExplode = olc::SOUND::LoadAudioSample("Resources\\soundFX\\Explode.wav");
-					sndPowerUp1 = olc::SOUND::LoadAudioSample("Resources\\soundFX\\PowerUp1.wav");		//test
+					sndExplode = olc::SOUND::LoadAudioSample("Resources/soundFX/Explode.wav");
+					sndPowerUp1 = olc::SOUND::LoadAudioSample("Resources/soundFX/PowerUp1.wav");		//test
 					if (sndPowerUp1 == -1) sndPowerUp1 = sndExplode; //load default sound if PowerUp1.wav is broken!
-					sndAutopilotOn = olc::SOUND::LoadAudioSample("Resources\\soundFX\\autopilot.wav");
-					sndAutopilotOff = olc::SOUND::LoadAudioSample("Resources\\soundFX\\coin.wav");
+					sndAutopilotOn = olc::SOUND::LoadAudioSample("Resources/soundFX/autopilot.wav");
+					sndAutopilotOff = olc::SOUND::LoadAudioSample("Resources/soundFX/coin.wav");
 
 					cout << "\n Loading sprites...\n";
 					sprPlayer = new olc::Sprite("Resources/tank.png");
