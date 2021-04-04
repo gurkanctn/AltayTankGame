@@ -1,5 +1,5 @@
 # AltayTankGame
-### Download link: https://epicos.itch.io/altay-tank-game
+### Download link (for Windows): https://epicos.itch.io/altay-tank-game
 ### Gameplay link: https://www.youtube.com/watch?v=9LFq-MUA6D4
 
 ## LICENCES
@@ -11,7 +11,6 @@
 3. Game background is from NASA.
 
 4. Source code (Altay.cpp) is not licenced, it can be distributed or modified in any way you like.
-
 
 
 Altay Tank Game web page is on: http://epicos.itch.io
