@@ -1,6 +1,7 @@
 
 #include "pch.h"
 #define OLC_PGE_APPLICATION
+#define OLC_PGEX_SOUND
 
 #include "olcPixelGameEngine.h"
 #include "olcPGEX_Graphics2D.h"
@@ -30,7 +31,7 @@ class Altay : public olc::PixelGameEngine
 public:
 	Altay()
 	{
-		sAppName = "ALTAY TANK GAME, v2.0a"; //First Linux version, based on 1.5.1
+		sAppName = "ALTAY TANK GAME, v2.0b"; //Linux version with Sounds, based on 1.5.1
 	}
 
 private:
@@ -982,7 +983,7 @@ public:
 		// todo: report ALL missing or bad files (if sndXXX == -1)
 		olc::SOUND::InitialiseAudio();
 		sndSplashScreen = olc::SOUND::LoadAudioSample("Resources/music/SplashScreen.wav");
-		sprSplashScreen = new olc::Sprite("./Resources/altay-01.jpg");
+		sprSplashScreen = new olc::Sprite("./Resources/altay-01.png");
 
 		nGameState = 0;
 		prevGameState = -1;

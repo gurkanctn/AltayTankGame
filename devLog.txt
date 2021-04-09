@@ -1,5 +1,9 @@
 Build command @ Terminal for Linux
 added optimization (takes longer than expected on VS Code, approx 10 seconds on Terminal)
-g++ -o AltayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -O3
+g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -O3
+
+g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -Ofast
+
+game plays at 20fps on my Linux VM (Pardus, 2GB RAM, 3d Acceleration ON.).
 
 for Windows, check Javidx9's videos (use Visual Studio 2019 Community Edition)
