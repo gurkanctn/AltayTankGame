@@ -1,6 +1,8 @@
 # AltayTankGame
+### Gameplay Video: https://www.youtube.com/watch?v=9LFq-MUA6D4
+
 ### Download link (for Windows): https://epicos.itch.io/altay-tank-game
-### Gameplay link: https://www.youtube.com/watch?v=9LFq-MUA6D4
+For Linux, the build command and prerequisites are written in the devlog.txt file.
 
 ## LICENCES
 
