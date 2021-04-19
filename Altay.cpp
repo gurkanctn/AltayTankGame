@@ -6,6 +6,8 @@
 #include "olcPixelGameEngine.h"
 #include "olcPGEX_Graphics2D.h"
 #include "olcPGEX_Sound.h"
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -25,6 +27,24 @@ Feel free to port the game to Linux, Android, or other OS.
 The licences of third party libraries are available at: https://github.com/gurkanctn/AltayTankGame
 */
 
+struct Timer
+{
+	//time_point<std::chrono::steady_clock> start, end;
+	std::chrono::duration<float> duration;
+	std::chrono::_V2::system_clock::time_point start, end;
+
+	Timer()
+	{
+		start = std::chrono::high_resolution_clock::now();
+	}
+	~Timer()
+	{
+		end = std::chrono::high_resolution_clock::now();
+		duration = end - start;
+		float ms = duration.count() * 1000.0f;
+		std::cout << "Timer took " << ms << "ms\n";
+	}
+};
 
 class Altay : public olc::PixelGameEngine
 {
@@ -255,8 +275,10 @@ private:
 	}
 
 
-	float distance(const float x1, const float y1, const float x2, const float y2) {
-		return (x2 - x1) * (x2-x1) + (y2 - y1) * (y2 - y1);
+	float distance(const float& x1, const float& y1, const float& x2, const float& y2) {
+		// Timer timer;
+		//return (x2 - x1) * (x2-x1) + (y2 - y1) * (y2 - y1);
+		return pow((x2-x1), 2.0f) + pow((y2-y1), 2.0f);
 	}
 
 	void SplashScreen(float fElapsedTime) {
@@ -640,23 +662,23 @@ private:
 			for (auto &e : listEnemies)
 			{
 				float temp_dist = distance(e.px, e.py, x.px, x.py);
-				// add collateral damage code here
-				if ((temp_dist >1000.0f) & ( temp_dist < 10000.0f)) {
-					int CollateralDamage = std::rand() % 3;
-					e.health = e.health - 10 * CollateralDamage;		// collateral damage
-					if (e.health <= 0) {	//enemy is killed
-						//gameScore += e.firePower * 10;	// was 1000
-						gameScore += int(1000.0f + e.firePower * 10.0f);	// was 1000
-					}
-					e.fireRate = e.fireRate * 1.2f;
-					e.px -= e.vx*10.0f*fElapsedTime;	//go back a bit
-					e.py -= e.vy*10.0f*fElapsedTime;
-					e.vx = e.vx * 0.95f;		//slow it down a bit
-					e.vy = e.vy * 0.95f;
+				// // add collateral damage code here
+				// if ((temp_dist >1000.0f) & ( temp_dist < 10000.0f)) {
+				// 	int CollateralDamage = std::rand() % 3;
+				// 	e.health = e.health - 10 * CollateralDamage;		// collateral damage
+				// 	if (e.health <= 0) {	//enemy is killed
+				// 		//gameScore += e.firePower * 10;	// was 1000
+				// 		gameScore += int(1000.0f + e.firePower * 10.0f);	// was 1000
+				// 	}
+				// 	e.fireRate = e.fireRate * 1.2f;
+				// 	e.px -= e.vx*10.0f*fElapsedTime;	//go back a bit
+				// 	e.py -= e.vy*10.0f*fElapsedTime;
+				// 	e.vx = e.vx * 0.95f;		//slow it down a bit
+				// 	e.vy = e.vy * 0.95f;
 
-					olc::SOUND::PlaySample(sndExplode);
+				// 	olc::SOUND::PlaySample(sndExplode);
 
-				}
+				// }
 			}
 		}
 		listExplosions.remove_if([&](const sExplosion &x) {return (x.px < 0) || (x.py < 0) || (x.px > ScreenWidth()) || (x.py > ScreenHeight()) || (x.currentSize > x.sizeMax); });
@@ -702,19 +724,6 @@ private:
 				listBullets.push_back(b);
 				e.fireRateAcc = 0.0f;	//reload
 			}
-			//check each *other* enemy for collision
-			//for (auto &o : listEnemies)
-			//{
-			//	if ((abs(o.px - e.px) < 40) && (abs(o.py - e.py) < 40) && (o.px != e.px) && (o.py != e.py))	//check collision
-			//	{
-			//		o.health = o.health - 1;
-			//		/*o.vx = o.vx * 0.8;
-			//		o.vy = o.vy * 0.8;*/
-			//		e.health = e.health - 1;
-			//		/*e.vx = e.vx * 0.8;
-			//		e.vy = e.vy * 0.8;*/
-			//	}
-			//}
 		}
 		listEnemies.remove_if([&](const sEnemy &e) {return (e.px < 0) || (e.py < 0) || (e.px > ScreenWidth()) || (e.py > ScreenHeight()) || e.health < 0; });
 
