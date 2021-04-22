@@ -8,3 +8,37 @@ g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -Ofa
 game plays at 20fps on my Linux VirtualBox (Pardus, 2GB RAM, 3d Acceleration ON.).
 
 To build the game on Windows, check Javidx9's videos (e.g. use Visual Studio 2019 Community Edition)
+
+
+++ added Timer (thx Cherno) to see how long a function takes.
+
+float distance(const float x1, const float y1, const float x2, const float y2) {
+		Timer timer;
+		return (x2 - x1) * (x2-x1) + (y2 - y1) * (y2 - y1);
+	}
+
+baseline: (distance function)
+Timer took 0.002851ms
+Timer took 0.002836ms
+Timer took 0.003472ms
+Timer took 0.002018ms
+Timer took 0.00277ms
+Timer took 0.002238ms
+Timer took 0.00276ms
+Timer took 0.00644ms
+Timer took 0.016004ms
+Timer took 0.002839ms
+Timer took 0.00763ms
+Timer took 0.002944ms
+Timer took 0.003234ms
+Timer took 0.003833ms
+Timer took 0.002349ms
+Timer took 0.003025ms
+Timer took 0.00263ms
+Timer took 0.002869ms
+Timer took 0.002715ms
+Timer took 0.00244ms
+Timer took 0.002233ms
+Timer took 0.003624ms
+Timer took 0.001973ms
+
