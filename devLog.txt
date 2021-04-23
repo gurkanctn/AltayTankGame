@@ -1,11 +1,17 @@
 Build command @ Terminal for Linux
-added optimization (20 seconds on Terminal)
-g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lasound -lstdc++fs -std=c++17 -O3
+	added optimization (20 seconds on Terminal)
+	g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lasound -lstdc++fs -std=c++17 -O3
 
-alternative:
-g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -Ofast
+	alternative:
+	g++ -o altayTerm Altay.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -Ofast
 
-game plays at 20fps on my Linux VirtualBox (Pardus, 2GB RAM, 3d Acceleration ON.).
+	game plays at 20fps on my Linux VirtualBox (Pardus, 2GB RAM, 3d Acceleration ON.).
+
+	to install olcPixelGameEngine dependencies on Linux:
+	sudo apt install build-essential libglu1-mesa-dev libpng-dev
+
+	to install ALSA sound libraries
+	sudo apt install libasound2-dev
 
 To build the game on Windows, check Javidx9's videos (e.g. use Visual Studio 2019 Community Edition)
 
