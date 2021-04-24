@@ -21,13 +21,7 @@ on:
     - cron: '26 8 * * 5'
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: openrndr/setup-opengl@v1.1
-      - run: xvfb-run glxinfo
-      
+    
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
@@ -69,9 +63,13 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    - run: |
-       ./build.sh
-    #   make release
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: openrndr/setup-opengl@v1.1
+      - run: ./build.sh
+  #   make release
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+    #- name: Perform CodeQL Analysis
+    #  uses: github/codeql-action/analyze@v1
