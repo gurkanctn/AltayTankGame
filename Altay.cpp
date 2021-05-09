@@ -1,4 +1,3 @@
-
 #include "pch.h"
 #define OLC_PGE_APPLICATION
 #define OLC_PGEX_SOUND
@@ -29,6 +28,10 @@ The licences of third party libraries are available at: https://github.com/gurka
 
 struct Timer
 {
+	// Cherno style performance measurement functionality, from: https://www.youtube.com/watch?v=YG4jexlSAjc
+	// Usage: instantiate a Timer struct inside the scope you want to measure.
+	// upon exit from scope, it will output the time diff to the console.
+
 	//time_point<std::chrono::steady_clock> start, end;
 	std::chrono::duration<float> duration;
 	std::chrono::_V2::system_clock::time_point start, end;
@@ -979,7 +982,10 @@ fGlobalTime += fElapsedTime;
 		DrawString(int(ScreenWidth() / 2.0f) - 254, int(ScreenHeight() * 2.0f / 3.0f) + 146, "PRESS ESC TO QUIT.", olc::WHITE, 2);
 
 		SetDrawTarget(nullptr);
-		DrawSprite(0, 0, buffBack);
+		{
+			//Timer timer;
+			DrawSprite(0, 0, buffBack); //this is the bottleneck for Linux.
+		}
 	}
 public:
 	float Saturate(float val, float limitmin, float limitmax) {
