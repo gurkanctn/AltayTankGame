@@ -14,14 +14,14 @@ const float PI = 3.1415926535f; // it could as well be 3.142
 
 /* 
 ALTAY TANK GAME
-G.�etin, 2018-2020
+G.Çetin, 2018-2020
 
 See https://github.com/gurkanctn/AltayTankGame for issues, pull request and other info.
 
 Use as-is. No guarantee is given.
 
-The game works on Windows 10, 64bit. or Linux.
-Feel free to port the game to Linux, Android, or other OS.
+The game works on Windows 10 (64bit) and Linux (Ubuntu and Pardus).
+Feel free to port the game to other operating systems.
 
 The licences of third party libraries are available at: https://github.com/gurkanctn/AltayTankGame
 */
