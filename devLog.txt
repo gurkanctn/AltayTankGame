@@ -25,7 +25,13 @@ float distance(const float x1, const float y1, const float x2, const float y2) {
 
 Drawing the whole screen is the bottleneck for Linux.
 	[] Maybe worth Using decals? Possible?
-		{
-			//Timer timer;
-			DrawSprite(0, 0, buffBack); //this is the bottleneck for Linux.
-		}
+
+Timing certain parts of the code:
+	// Altay includes performance measurement functionality. 
+	// Cherno style, ref: https://www.youtube.com/watch?v=YG4jexlSAjc
+	// Usage: instantiate a Timer struct inside the scope you want to measure.
+	// upon exit from scope, it will output the time diff to the console.
+	{
+		Timer timer;
+		DrawSprite(0, 0, buffBack); //this is the bottleneck for Linux.
+	}

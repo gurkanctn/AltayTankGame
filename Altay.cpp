@@ -5,8 +5,6 @@
 #include "olcPixelGameEngine.h"
 #include "olcPGEX_Graphics2D.h"
 #include "olcPGEX_Sound.h"
-#include <chrono>
-#include <thread>
 
 using namespace std;
 
@@ -14,7 +12,7 @@ const float PI = 3.1415926535f; // it could as well be 3.142
 
 /* 
 ALTAY TANK GAME
-G.Çetin, 2018-2020
+G.Çetin, 2018-2021
 
 See https://github.com/gurkanctn/AltayTankGame for issues, pull request and other info.
 
@@ -26,28 +24,9 @@ Feel free to port the game to other operating systems.
 The licences of third party libraries are available at: https://github.com/gurkanctn/AltayTankGame
 */
 
-struct Timer
-{
-	// Cherno style performance measurement functionality, from: https://www.youtube.com/watch?v=YG4jexlSAjc
-	// Usage: instantiate a Timer struct inside the scope you want to measure.
-	// upon exit from scope, it will output the time diff to the console.
-
-	//time_point<std::chrono::steady_clock> start, end;
-	std::chrono::duration<float> duration;
-	std::chrono::_V2::system_clock::time_point start, end;
-
-	Timer()
-	{
-		start = std::chrono::high_resolution_clock::now();
-	}
-	~Timer()
-	{
-		end = std::chrono::high_resolution_clock::now();
-		duration = end - start;
-		float ms = duration.count() * 1000.0f;
-		std::cout << "Timer took " << ms << "ms\n";
-	}
-};
+/* Notes for developers: 
+	See devLog.txt for some notes.
+*/
 
 class Altay : public olc::PixelGameEngine
 {
